@@ -1,0 +1,13 @@
+{
+  "name": "dilemma-platform",
+  "version": "1.0.0",
+  "description": "困境选择平台 - 发布两难问题，投票理由，讨论交流",
+  "private": true,
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start"
+  }
+}
