@@ -49,7 +49,7 @@ export default function QuestionDetail() {
       reasons: {
         ...prev.reasons,
         [result.reason.side]: [result.reason, ...prev.reasons[result.reason.side]]
-          .sort((a, b) => b.likes - a.likes)
+          .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
       }
     }))
     loadTopReasons()
@@ -62,7 +62,7 @@ export default function QuestionDetail() {
         ...prev.reasons,
         [side]: prev.reasons[side].map(r => 
           r.id === updatedReason.id ? updatedReason : r
-        ).sort((a, b) => b.likes - a.likes)
+        ).sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
       }
     }))
   }

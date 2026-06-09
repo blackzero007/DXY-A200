@@ -43,11 +43,11 @@ router.get('/:id', (req, res) => {
 
   const reasonsA = db.reasons
     .filter(r => r.question_id === id && r.side === 'A')
-    .sort((a, b) => b.likes - a.likes || b.created_at - a.created_at);
+    .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at);
 
   const reasonsB = db.reasons
     .filter(r => r.question_id === id && r.side === 'B')
-    .sort((a, b) => b.likes - a.likes || b.created_at - a.created_at);
+    .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at);
 
   res.json({
     ...question,
@@ -65,12 +65,12 @@ router.get('/:id/top-reasons', (req, res) => {
   
   const topA = db.reasons
     .filter(r => r.question_id === id && r.side === 'A')
-    .sort((a, b) => b.likes - a.likes)
+    .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
     .slice(0, 3);
 
   const topB = db.reasons
     .filter(r => r.question_id === id && r.side === 'B')
-    .sort((a, b) => b.likes - a.likes)
+    .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
     .slice(0, 3);
 
   res.json({ A: topA, B: topB });
