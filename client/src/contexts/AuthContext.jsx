@@ -21,6 +21,13 @@ export function AuthProvider({ children }) {
       }
     }
     setLoading(false);
+
+    const handleAuthExpired = () => {
+      setUser(null);
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('auth:expired', handleAuthExpired);
   }, []);
 
   const fetchCurrentUser = async () => {
