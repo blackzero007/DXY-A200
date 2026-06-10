@@ -131,7 +131,11 @@ export default function QuestionList() {
     setLoading(true)
     try {
       const data = await getQuestions({ sort, category, keyword, page, limit: 10 })
-      setQuestions(data.list)
+      if (page === 1) {
+        setQuestions(data.list)
+      } else {
+        setQuestions(prev => [...prev, ...data.list])
+      }
       setTotal(data.total)
     } catch (err) {
       console.error('加载问题失败:', err)
@@ -145,7 +149,11 @@ export default function QuestionList() {
     setFavoritesLoading(true)
     try {
       const data = await getFavorites({ page: favoritesPage, limit: 10 })
-      setFavorites(data.list)
+      if (favoritesPage === 1) {
+        setFavorites(data.list)
+      } else {
+        setFavorites(prev => [...prev, ...data.list])
+      }
       setFavoritesTotal(data.total)
     } catch (err) {
       console.error('加载收藏失败:', err)
