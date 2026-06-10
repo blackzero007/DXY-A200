@@ -11,6 +11,8 @@ function ensureDataDir() {
   }
 }
 
+const CATEGORIES = ['职场', '情感', '消费', '学业', '科技'];
+
 function readDB() {
   ensureDataDir();
   if (!fs.existsSync(dbPath)) {
@@ -21,6 +23,22 @@ function readDB() {
     const db = JSON.parse(data);
     if (!db.users) db.users = [];
     if (!db.sessions) db.sessions = [];
+    if (!db.questions) db.questions = [];
+    if (!db.reasons) db.reasons = [];
+    if (!db.replies) db.replies = [];
+
+    let needSave = false;
+    db.questions.forEach(q => {
+      if (!q.category || !CATEGORIES.includes(q.category)) {
+        q.category = '职场';
+        needSave = true;
+      }
+    });
+
+    if (needSave) {
+      writeDB(db);
+    }
+
     return db;
   } catch (err) {
     console.error('读取数据库失败:', err);
@@ -51,6 +69,7 @@ function initDatabase() {
       option_b: '回老家发展',
       description: '28岁，在一线城市工作5年，年薪25万，房价高压力大。老家省会有房，父母在身边，但机会少工资低。该怎么选？',
       author_name: '迷茫的年轻人',
+      category: '职场',
       created_at: now - 86400000 * 3,
       votes_a: 156,
       votes_b: 98
@@ -62,6 +81,7 @@ function initDatabase() {
       option_b: 'Windows笔记本',
       description: '程序员，主要写前端和Node.js，偶尔玩游戏。预算1万5左右，纠结Mac的生态还是Windows的兼容性。',
       author_name: '码农小张',
+      category: '科技',
       created_at: now - 86400000 * 2,
       votes_a: 203,
       votes_b: 178
@@ -73,6 +93,7 @@ function initDatabase() {
       option_b: '直接工作',
       description: '大三计算机专业，成绩中等。读研怕浪费三年时间，工作又怕学历不够以后发展受限。',
       author_name: '大三学生',
+      category: '学业',
       created_at: now - 86400000,
       votes_a: 120,
       votes_b: 145

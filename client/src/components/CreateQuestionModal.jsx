@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createQuestion } from '../utils/api'
+import { createQuestion, CATEGORIES } from '../utils/api'
 
 export default function CreateQuestionModal({ onClose, onSuccess }) {
   const [title, setTitle] = useState('')
@@ -7,6 +7,7 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
   const [optionB, setOptionB] = useState('')
   const [description, setDescription] = useState('')
   const [authorName, setAuthorName] = useState('')
+  const [category, setCategory] = useState(CATEGORIES[0])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -34,7 +35,8 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
         option_a: optionA.trim(),
         option_b: optionB.trim(),
         description: description.trim() || null,
-        author_name: authorName.trim() || '匿名用户'
+        author_name: authorName.trim() || '匿名用户',
+        category
       })
       onSuccess && onSuccess(result)
     } catch (err) {
@@ -93,6 +95,22 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
               onChange={e => setDescription(e.target.value)}
               maxLength={500}
             />
+          </div>
+
+          <div className="form-group">
+            <label>分类标签 *</label>
+            <div className="category-selector">
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`category-tag ${category === cat ? 'active' : ''}`}
+                  onClick={() => setCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="form-group">

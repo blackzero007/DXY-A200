@@ -100,6 +100,7 @@ export default function QuestionDetail() {
 
       <div className="card">
         <div className="question-detail-header">
+          <div className="question-category-tag large">{question.category || '职场'}</div>
           <h2>{question.title}</h2>
           {question.description && (
             <p className="description">{question.description}</p>

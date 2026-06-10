@@ -31,6 +31,8 @@ api.interceptors.response.use(
   }
 );
 
+export const CATEGORIES = ['职场', '情感', '消费', '学业', '科技'];
+
 export const getQuestions = (params = {}) => {
   return api.get('/questions', { params }).then(res => res.data);
 };

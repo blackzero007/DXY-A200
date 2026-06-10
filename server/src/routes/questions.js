@@ -5,10 +5,14 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  const { page = 1, limit = 10, sort = 'newest' } = req.query;
+  const { page = 1, limit = 10, sort = 'newest', category } = req.query;
   const db = readDB();
   
   let questions = [...db.questions];
+  
+  if (category && category !== '全部') {
+    questions = questions.filter(q => q.category === category);
+  }
   
   if (sort === 'hot') {
     questions.sort((a, b) => (b.votes_a + b.votes_b) - (a.votes_a + a.votes_b) || b.created_at - a.created_at);
@@ -76,8 +80,10 @@ router.get('/:id/top-reasons', (req, res) => {
   res.json({ A: topA, B: topB });
 });
 
+const CATEGORIES = ['职场', '情感', '消费', '学业', '科技'];
+
 router.post('/', (req, res) => {
-  const { title, option_a, option_b, description, author_name } = req.body;
+  const { title, option_a, option_b, description, author_name, category } = req.body;
 
   if (!title || !option_a || !option_b) {
     return res.status(400).json({ error: '标题和两个选项不能为空' });
@@ -85,6 +91,10 @@ router.post('/', (req, res) => {
 
   if (option_a === option_b) {
     return res.status(400).json({ error: '两个选项不能相同' });
+  }
+
+  if (category && !CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: '无效的分类标签' });
   }
 
   const db = readDB();
@@ -98,6 +108,7 @@ router.post('/', (req, res) => {
     option_b,
     description: description || null,
     author_name: author_name || '匿名用户',
+    category: category || '职场',
     created_at: now,
     votes_a: 0,
     votes_b: 0

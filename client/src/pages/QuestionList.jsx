@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getQuestions } from '../utils/api'
+import { getQuestions, CATEGORIES } from '../utils/api'
 import CreateQuestionModal from '../components/CreateQuestionModal.jsx'
 
 function formatTime(timestamp) {
@@ -24,6 +24,7 @@ function QuestionCard({ question, onClick }) {
 
   return (
     <div className="card question-card" onClick={onClick}>
+      <div className="question-category-tag">{question.category || '职场'}</div>
       <h3>{question.title}</h3>
       <div className="question-options">
         <div className="option-tag side-a">{question.option_a}</div>
@@ -49,18 +50,19 @@ export default function QuestionList() {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState('newest')
+  const [category, setCategory] = useState('全部')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
 
   useEffect(() => {
     loadQuestions()
-  }, [sort, page])
+  }, [sort, category, page])
 
   const loadQuestions = async () => {
     setLoading(true)
     try {
-      const data = await getQuestions({ sort, page, limit: 10 })
+      const data = await getQuestions({ sort, category, page, limit: 10 })
       setQuestions(data.list)
       setTotal(data.total)
     } catch (err) {
@@ -80,6 +82,24 @@ export default function QuestionList() {
       <div className="header">
         <h1>🤔 困境选择</h1>
         <p>每个两难问题，都值得认真思考</p>
+      </div>
+
+      <div className="category-filter">
+        <div 
+          className={`filter-tag ${category === '全部' ? 'active' : ''}`}
+          onClick={() => { setCategory('全部'); setPage(1); }}
+        >
+          全部
+        </div>
+        {CATEGORIES.map(cat => (
+          <div 
+            key={cat}
+            className={`filter-tag ${category === cat ? 'active' : ''}`}
+            onClick={() => { setCategory(cat); setPage(1); }}
+          >
+            {cat}
+          </div>
+        ))}
       </div>
 
       <div className="tabs">
