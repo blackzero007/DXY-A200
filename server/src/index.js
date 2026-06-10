@@ -6,6 +6,7 @@ const { initDatabase } = require('./db');
 
 const questionsRouter = require('./routes/questions');
 const reasonsRouter = require('./routes/reasons');
+const usersRouter = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,6 +23,7 @@ app.use(express.json());
 
 app.use('/api/questions', questionsRouter);
 app.use('/api/reasons', reasonsRouter);
+app.use('/api/users', usersRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });

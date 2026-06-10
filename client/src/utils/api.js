@@ -5,6 +5,30 @@ const api = axios.create({
   timeout: 10000
 });
 
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getQuestions = (params = {}) => {
   return api.get('/questions', { params }).then(res => res.data);
 };
@@ -47,6 +71,22 @@ export const likeReply = (replyId) => {
 
 export const dislikeReply = (replyId) => {
   return api.post(`/reasons/replies/${replyId}/dislike`).then(res => res.data);
+};
+
+export const register = (data) => {
+  return api.post('/users/register', data).then(res => res.data);
+};
+
+export const login = (data) => {
+  return api.post('/users/login', data).then(res => res.data);
+};
+
+export const getCurrentUser = () => {
+  return api.get('/users/me').then(res => res.data);
+};
+
+export const logout = () => {
+  return api.post('/users/logout').then(res => res.data);
 };
 
 export default api;

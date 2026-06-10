@@ -14,14 +14,17 @@ function ensureDataDir() {
 function readDB() {
   ensureDataDir();
   if (!fs.existsSync(dbPath)) {
-    return { questions: [], reasons: [], replies: [] };
+    return { questions: [], reasons: [], replies: [], users: [], sessions: [] };
   }
   try {
     const data = fs.readFileSync(dbPath, 'utf-8');
-    return JSON.parse(data);
+    const db = JSON.parse(data);
+    if (!db.users) db.users = [];
+    if (!db.sessions) db.sessions = [];
+    return db;
   } catch (err) {
     console.error('读取数据库失败:', err);
-    return { questions: [], reasons: [], replies: [] };
+    return { questions: [], reasons: [], replies: [], users: [], sessions: [] };
   }
 }
 
