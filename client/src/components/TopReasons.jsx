@@ -14,7 +14,7 @@ export default function TopReasons({ topA, topB, optionA, optionB }) {
 
   const handleUserClick = (e, nickname) => {
     e.stopPropagation()
-    navigate(`/user/${nickname}`)
+    navigate(`/user/${encodeURIComponent(nickname)}`)
   }
 
   const renderTopList = (reasons, side) => (

@@ -57,7 +57,7 @@ function Header() {
                     style={{ cursor: 'pointer' }}
                     onClick={() => {
                       setShowDropdown(false)
-                      navigate(`/user/${user.nickname}`)
+                      navigate(`/user/${encodeURIComponent(user.nickname)}`)
                     }}
                   >
                     <div
@@ -76,7 +76,7 @@ function Header() {
                     className="dropdown-item" 
                     onClick={() => {
                       setShowDropdown(false)
-                      navigate(`/user/${user.nickname}`)
+                      navigate(`/user/${encodeURIComponent(user.nickname)}`)
                     }}
                   >
                     <span>个人主页</span>

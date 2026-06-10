@@ -5,7 +5,7 @@ import CreateQuestionModal from '../components/CreateQuestionModal.jsx'
 
 function handleUserClick(e, nickname, navigate) {
   e.stopPropagation()
-  navigate(`/user/${nickname}`)
+  navigate(`/user/${encodeURIComponent(nickname)}`)
 }
 
 function formatTime(timestamp) {

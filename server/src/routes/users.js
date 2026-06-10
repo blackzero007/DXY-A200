@@ -118,8 +118,19 @@ router.post('/logout', authMiddleware, (req, res) => {
   res.json({ message: '退出登录成功' });
 });
 
-router.get('/profile/:nickname', (req, res) => {
-  const { nickname } = req.params;
+function extractNickname(req, suffix) {
+  const fullPath = decodeURIComponent(req.path);
+  let path = fullPath.substring('/profile'.length);
+  if (path.startsWith('/')) path = path.substring(1);
+  if (suffix && path.endsWith(suffix)) {
+    path = path.substring(0, path.length - suffix.length);
+    if (path.endsWith('/')) path = path.substring(0, path.length - 1);
+  }
+  return path;
+}
+
+router.get(/^\/profile\/((?!.*\/questions$)(?!.*\/reasons$)(?!.*\/replies$).+)$/, (req, res) => {
+  let nickname = extractNickname(req);
   const db = readDB();
 
   const registeredUser = db.users.find(u => u.nickname === nickname);
@@ -169,8 +180,8 @@ router.get('/profile/:nickname', (req, res) => {
   });
 });
 
-router.get('/profile/:nickname/questions', (req, res) => {
-  const { nickname } = req.params;
+router.get(/^\/profile\/.+\/questions$/, (req, res) => {
+  let nickname = extractNickname(req, 'questions');
   const { page = 1, limit = 10 } = req.query;
   const db = readDB();
 
@@ -194,8 +205,8 @@ router.get('/profile/:nickname/questions', (req, res) => {
   });
 });
 
-router.get('/profile/:nickname/reasons', (req, res) => {
-  const { nickname } = req.params;
+router.get(/^\/profile\/.+\/reasons$/, (req, res) => {
+  let nickname = extractNickname(req, 'reasons');
   const { page = 1, limit = 10 } = req.query;
   const db = readDB();
 
@@ -224,8 +235,8 @@ router.get('/profile/:nickname/reasons', (req, res) => {
   });
 });
 
-router.get('/profile/:nickname/replies', (req, res) => {
-  const { nickname } = req.params;
+router.get(/^\/profile\/.+\/replies$/, (req, res) => {
+  let nickname = extractNickname(req, 'replies');
   const { page = 1, limit = 10 } = req.query;
   const db = readDB();
 

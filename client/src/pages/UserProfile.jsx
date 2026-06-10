@@ -34,6 +34,7 @@ const TABS = [
 export default function UserProfile() {
   const { nickname } = useParams()
   const navigate = useNavigate()
+  const decodedNickname = decodeURIComponent(nickname || '')
   const [profile, setProfile] = useState(null)
   const [activeTab, setActiveTab] = useState('questions')
   const [listData, setListData] = useState([])
@@ -45,17 +46,17 @@ export default function UserProfile() {
 
   useEffect(() => {
     loadProfile()
-  }, [nickname])
+  }, [decodedNickname])
 
   useEffect(() => {
     loadListData()
-  }, [activeTab, nickname, page])
+  }, [activeTab, decodedNickname, page])
 
   const loadProfile = async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await getUserProfile(nickname)
+      const data = await getUserProfile(decodedNickname)
       setProfile(data)
     } catch (err) {
       setError(err.response?.data?.error || '加载失败')
@@ -70,13 +71,13 @@ export default function UserProfile() {
       let data
       switch (activeTab) {
         case 'questions':
-          data = await getUserQuestions(nickname, { page, limit: 10 })
+          data = await getUserQuestions(decodedNickname, { page, limit: 10 })
           break
         case 'reasons':
-          data = await getUserReasons(nickname, { page, limit: 10 })
+          data = await getUserReasons(decodedNickname, { page, limit: 10 })
           break
         case 'replies':
-          data = await getUserReplies(nickname, { page, limit: 10 })
+          data = await getUserReplies(decodedNickname, { page, limit: 10 })
           break
       }
       setListData(prev => page === 1 ? data.list : [...prev, ...data.list])
@@ -106,7 +107,7 @@ export default function UserProfile() {
     )
   }
 
-  if (error || !profile) {
+  if (error || !profile || !profile.user) {
     return (
       <div className="container">
         <button className="back-btn" onClick={() => navigate('/')}>

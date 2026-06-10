@@ -47,7 +47,7 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
 
   const handleUserClick = (e, nickname) => {
     e.stopPropagation()
-    navigate(`/user/${nickname}`)
+    navigate(`/user/${encodeURIComponent(nickname)}`)
   }
 
   return (
@@ -131,7 +131,7 @@ export default function ReasonCard({ reason, side, onUpdate }) {
 
   const handleUserClick = (e, nickname) => {
     e.stopPropagation()
-    navigate(`/user/${nickname}`)
+    navigate(`/user/${encodeURIComponent(nickname)}`)
   }
 
   const loadReplies = async () => {

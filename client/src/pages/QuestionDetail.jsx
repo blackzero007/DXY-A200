@@ -109,7 +109,7 @@ export default function QuestionDetail() {
             由{' '}
             <span 
               className="user-nickname-link"
-              onClick={() => navigate(`/user/${question.author_name}`)}
+              onClick={() => navigate(`/user/${encodeURIComponent(question.author_name)}`)}
               style={{ cursor: 'pointer' }}
             >
               @{question.author_name}
