@@ -109,4 +109,20 @@ export const getUserReplies = (nickname, params = {}) => {
   return api.get(`/users/profile/${nickname}/replies`, { params }).then(res => res.data);
 };
 
+export const getFavorites = (params = {}) => {
+  return api.get('/users/favorites', { params }).then(res => res.data);
+};
+
+export const addFavorite = (questionId) => {
+  return api.post(`/users/favorites/${questionId}`).then(res => res.data);
+};
+
+export const removeFavorite = (questionId) => {
+  return api.delete(`/users/favorites/${questionId}`).then(res => res.data);
+};
+
+export const checkFavorite = (questionId) => {
+  return api.get(`/users/favorites/check/${questionId}`).then(res => res.data);
+};
+
 export default api;

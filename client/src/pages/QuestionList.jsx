@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getQuestions, CATEGORIES } from '../utils/api'
+import { getQuestions, CATEGORIES, getFavorites, removeFavorite } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
 import CreateQuestionModal from '../components/CreateQuestionModal.jsx'
 
 function handleUserClick(e, nickname, navigate) {
@@ -36,14 +37,31 @@ function highlightText(text, keyword) {
   )
 }
 
-function QuestionCard({ question, onClick, keyword }) {
+function QuestionCard({ question, onClick, keyword, showFavorite, isFavorited, onToggleFavorite, favoriteLoading }) {
   const navigate = useNavigate()
   const totalVotes = question.votes_a + question.votes_b
   const percentA = totalVotes > 0 ? (question.votes_a / totalVotes) * 100 : 50
   const percentB = totalVotes > 0 ? (question.votes_b / totalVotes) * 100 : 50
 
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation()
+    if (onToggleFavorite) {
+      onToggleFavorite(question.id)
+    }
+  }
+
   return (
     <div className="card question-card" onClick={onClick}>
+      {showFavorite && (
+        <button
+          className={`favorite-btn question-card-favorite ${isFavorited ? 'favorited' : ''}`}
+          onClick={handleFavoriteClick}
+          disabled={favoriteLoading}
+          title={isFavorited ? '取消收藏' : '收藏'}
+        >
+          {isFavorited ? '⭐' : '☆'}
+        </button>
+      )}
       <div className="question-category-tag">{question.category || '职场'}</div>
       <h3>{highlightText(question.title, keyword)}</h3>
       {question.description && (
@@ -75,8 +93,10 @@ function QuestionCard({ question, onClick, keyword }) {
 
 export default function QuestionList() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [questions, setQuestions] = useState([])
+  const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState(searchParams.get('sort') || 'newest')
   const [category, setCategory] = useState(searchParams.get('category') || '全部')
@@ -85,6 +105,11 @@ export default function QuestionList() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [activeTab, setActiveTab] = useState('questions')
+  const [favoritesPage, setFavoritesPage] = useState(1)
+  const [favoritesTotal, setFavoritesTotal] = useState(0)
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
+  const [removingFavoriteId, setRemovingFavoriteId] = useState(null)
 
   useEffect(() => {
     const params = {}
@@ -95,8 +120,12 @@ export default function QuestionList() {
   }, [sort, category, keyword, setSearchParams])
 
   useEffect(() => {
-    loadQuestions()
-  }, [sort, category, keyword, page])
+    if (activeTab === 'questions') {
+      loadQuestions()
+    } else if (activeTab === 'favorites' && user) {
+      loadFavorites()
+    }
+  }, [sort, category, keyword, page, activeTab, user, favoritesPage])
 
   const loadQuestions = async () => {
     setLoading(true)
@@ -108,6 +137,37 @@ export default function QuestionList() {
       console.error('加载问题失败:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadFavorites = async () => {
+    if (!user) return
+    setFavoritesLoading(true)
+    try {
+      const data = await getFavorites({ page: favoritesPage, limit: 10 })
+      setFavorites(data.list)
+      setFavoritesTotal(data.total)
+    } catch (err) {
+      console.error('加载收藏失败:', err)
+    } finally {
+      setFavoritesLoading(false)
+    }
+  }
+
+  const handleRemoveFavorite = async (questionId) => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    setRemovingFavoriteId(questionId)
+    try {
+      await removeFavorite(questionId)
+      setFavorites(prev => prev.filter(f => f.id !== questionId))
+      setFavoritesTotal(prev => prev - 1)
+    } catch (err) {
+      console.error('取消收藏失败:', err)
+    } finally {
+      setRemovingFavoriteId(null)
     }
   }
 
@@ -191,47 +251,116 @@ export default function QuestionList() {
 
       <div className="tabs">
         <div 
-          className={`tab ${sort === 'newest' ? 'active' : ''}`}
-          onClick={() => { setSort('newest'); setPage(1); }}
+          className={`tab ${activeTab === 'questions' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('questions'); setPage(1); }}
         >
-          最新发布
+          全部问题
         </div>
         <div 
-          className={`tab ${sort === 'hot' ? 'active' : ''}`}
-          onClick={() => { setSort('hot'); setPage(1); }}
+          className={`tab ${activeTab === 'favorites' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('favorites'); setFavoritesPage(1); }}
         >
-          最热门
+          ⭐ 我的收藏
         </div>
       </div>
 
-      {loading ? (
-        <div className="card loading">加载中...</div>
-      ) : questions.length === 0 ? (
-        <div className="card empty-state">
-          <h3>{isSearching ? '没有找到相关问题' : '还没有问题'}</h3>
-          <p>{isSearching ? '试试其他关键词吧' : '点击右下角按钮发布第一个两难问题吧！'}</p>
-        </div>
-      ) : (
-        questions.map(q => (
-          <QuestionCard 
-            key={q.id} 
-            question={q} 
-            keyword={keyword}
-            onClick={() => navigate(`/question/${q.id}`)}
-          />
-        ))
+      {activeTab === 'questions' && (
+        <>
+          <div className="tabs sort-tabs">
+            <div 
+              className={`tab ${sort === 'newest' ? 'active' : ''}`}
+              onClick={() => { setSort('newest'); setPage(1); }}
+            >
+              最新发布
+            </div>
+            <div 
+              className={`tab ${sort === 'hot' ? 'active' : ''}`}
+              onClick={() => { setSort('hot'); setPage(1); }}
+            >
+              最热门
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="card loading">加载中...</div>
+          ) : questions.length === 0 ? (
+            <div className="card empty-state">
+              <h3>{isSearching ? '没有找到相关问题' : '还没有问题'}</h3>
+              <p>{isSearching ? '试试其他关键词吧' : '点击右下角按钮发布第一个两难问题吧！'}</p>
+            </div>
+          ) : (
+            questions.map(q => (
+              <QuestionCard 
+                key={q.id} 
+                question={q} 
+                keyword={keyword}
+                onClick={() => navigate(`/question/${q.id}`)}
+              />
+            ))
+          )}
+
+          {total > questions.length && (
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
+                onClick={() => setPage(p => p + 1)}
+              >
+                加载更多
+              </button>
+            </div>
+          )}
+        </>
       )}
 
-      {total > questions.length && (
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <button 
-            className="btn btn-outline" 
-            style={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
-            onClick={() => setPage(p => p + 1)}
-          >
-            加载更多
-          </button>
-        </div>
+      {activeTab === 'favorites' && (
+        <>
+          {!user ? (
+            <div className="card empty-state">
+              <h3>请先登录</h3>
+              <p>登录后即可查看你的收藏</p>
+              <button 
+                className="btn btn-primary"
+                style={{ marginTop: 16 }}
+                onClick={() => navigate('/login')}
+              >
+                去登录
+              </button>
+            </div>
+          ) : favoritesLoading ? (
+            <div className="card loading">加载中...</div>
+          ) : favorites.length === 0 ? (
+            <div className="card empty-state">
+              <h3>还没有收藏</h3>
+              <p>浏览问题时点击收藏按钮，即可添加到这里</p>
+            </div>
+          ) : (
+            favorites.map(q => (
+              <QuestionCard 
+                key={q.id} 
+                question={q} 
+                keyword={keyword}
+                onClick={() => navigate(`/question/${q.id}`)}
+                showFavorite={true}
+                isFavorited={true}
+                onToggleFavorite={handleRemoveFavorite}
+                favoriteLoading={removingFavoriteId === q.id}
+              />
+            ))
+          )}
+
+          {user && favoritesTotal > favorites.length && (
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
+                onClick={() => setFavoritesPage(p => p + 1)}
+              >
+                加载更多
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <button 

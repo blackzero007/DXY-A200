@@ -266,4 +266,99 @@ router.get(/^\/profile\/.+\/replies$/, (req, res) => {
   });
 });
 
+router.get('/favorites', authMiddleware, (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const db = readDB();
+  const userId = req.user.id;
+
+  const userFavorites = db.favorites
+    .filter(f => f.user_id === userId)
+    .sort((a, b) => b.created_at - a.created_at);
+
+  const favoriteQuestions = userFavorites.map(fav => {
+    const question = db.questions.find(q => q.id === fav.question_id);
+    if (!question) return null;
+    return {
+      ...question,
+      total_votes: question.votes_a + question.votes_b,
+      favorited_at: fav.created_at
+    };
+  }).filter(Boolean);
+
+  const start = (page - 1) * limit;
+  const end = start + Number(limit);
+  const paginated = favoriteQuestions.slice(start, end);
+
+  res.json({
+    list: paginated,
+    total: favoriteQuestions.length,
+    page: Number(page),
+    limit: Number(limit)
+  });
+});
+
+router.post('/favorites/:questionId', authMiddleware, (req, res) => {
+  const { questionId } = req.params;
+  const db = readDB();
+  const userId = req.user.id;
+
+  const question = db.questions.find(q => q.id === questionId);
+  if (!question) {
+    return res.status(404).json({ error: '问题不存在' });
+  }
+
+  const existingFavorite = db.favorites.find(
+    f => f.user_id === userId && f.question_id === questionId
+  );
+  if (existingFavorite) {
+    return res.status(400).json({ error: '已经收藏过这个问题了' });
+  }
+
+  const newFavorite = {
+    id: uuidv4(),
+    user_id: userId,
+    question_id: questionId,
+    created_at: Date.now()
+  };
+
+  db.favorites.push(newFavorite);
+  writeDB(db);
+
+  res.status(201).json({
+    message: '收藏成功',
+    favorite: newFavorite
+  });
+});
+
+router.delete('/favorites/:questionId', authMiddleware, (req, res) => {
+  const { questionId } = req.params;
+  const db = readDB();
+  const userId = req.user.id;
+
+  const favoriteIndex = db.favorites.findIndex(
+    f => f.user_id === userId && f.question_id === questionId
+  );
+
+  if (favoriteIndex === -1) {
+    return res.status(404).json({ error: '未找到该收藏' });
+  }
+
+  db.favorites.splice(favoriteIndex, 1);
+  writeDB(db);
+
+  res.json({ message: '取消收藏成功' });
+});
+
+router.get('/favorites/check/:questionId', authMiddleware, (req, res) => {
+  const { questionId } = req.params;
+  const db = readDB();
+  const userId = req.user.id;
+
+  const isFavorited = db.favorites.some(
+    f => f.user_id === userId && f.question_id === questionId
+  );
+
+  res.json({ is_favorited: isFavorited });
+});
+
 module.exports = router;

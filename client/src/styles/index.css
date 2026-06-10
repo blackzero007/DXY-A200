@@ -1254,6 +1254,64 @@ body {
   font-style: italic;
 }
 
+.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  background: white;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.favorite-btn:hover:not(:disabled) {
+  border-color: #fbbf24;
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.favorite-btn.favorited {
+  border-color: #fbbf24;
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.favorite-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.question-card-favorite {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.question-card {
+  position: relative;
+}
+
+.sort-tabs {
+  margin-bottom: 16px;
+}
+
+.sort-tabs .tab {
+  background: rgba(255,255,255,0.15);
+  font-size: 14px;
+  padding: 6px 14px;
+}
+
+.sort-tabs .tab.active {
+  background: white;
+  color: #667eea;
+}
+
 @media (max-width: 768px) {
   .auth-card {
     padding: 30px 20px;

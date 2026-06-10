@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getQuestion, getTopReasons } from '../utils/api'
+import { getQuestion, getTopReasons, checkFavorite, addFavorite, removeFavorite } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
 import ReasonCard from '../components/ReasonCard.jsx'
 import VoteModal from '../components/VoteModal.jsx'
 import TopReasons from '../components/TopReasons.jsx'
@@ -8,15 +9,51 @@ import TopReasons from '../components/TopReasons.jsx'
 export default function QuestionDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [question, setQuestion] = useState(null)
   const [topReasons, setTopReasons] = useState({ A: [], B: [] })
   const [loading, setLoading] = useState(true)
   const [showVoteModal, setShowVoteModal] = useState(false)
+  const [isFavorited, setIsFavorited] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
 
   useEffect(() => {
     loadQuestion()
     loadTopReasons()
-  }, [id])
+    if (user) {
+      loadFavoriteStatus()
+    }
+  }, [id, user])
+
+  const loadFavoriteStatus = async () => {
+    try {
+      const data = await checkFavorite(id)
+      setIsFavorited(data.is_favorited)
+    } catch (err) {
+      console.error('检查收藏状态失败:', err)
+    }
+  }
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    setFavoriteLoading(true)
+    try {
+      if (isFavorited) {
+        await removeFavorite(id)
+        setIsFavorited(false)
+      } else {
+        await addFavorite(id)
+        setIsFavorited(true)
+      }
+    } catch (err) {
+      console.error('操作收藏失败:', err)
+    } finally {
+      setFavoriteLoading(false)
+    }
+  }
 
   const loadQuestion = async () => {
     setLoading(true)
@@ -100,7 +137,17 @@ export default function QuestionDetail() {
 
       <div className="card">
         <div className="question-detail-header">
-          <div className="question-category-tag large">{question.category || '职场'}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div className="question-category-tag large">{question.category || '职场'}</div>
+            <button
+              className={`favorite-btn ${isFavorited ? 'favorited' : ''}`}
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
+              title={isFavorited ? '取消收藏' : '收藏'}
+            >
+              {isFavorited ? '⭐ 已收藏' : '☆ 收藏'}
+            </button>
+          </div>
           <h2>{question.title}</h2>
           {question.description && (
             <p className="description">{question.description}</p>
