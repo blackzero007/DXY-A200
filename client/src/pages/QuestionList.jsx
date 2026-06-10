@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getQuestions, CATEGORIES } from '../utils/api'
 import CreateQuestionModal from '../components/CreateQuestionModal.jsx'
 
@@ -17,7 +17,21 @@ function formatTime(timestamp) {
   return new Date(timestamp).toLocaleDateString()
 }
 
-function QuestionCard({ question, onClick }) {
+function highlightText(text, keyword) {
+  if (!keyword || !keyword.trim() || !text) return text
+  
+  const kw = keyword.trim()
+  const regex = new RegExp(`(${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  const parts = text.split(regex)
+  
+  return parts.map((part, index) => 
+    part.toLowerCase() === kw.toLowerCase() 
+      ? <span key={index} className="highlight">{part}</span> 
+      : part
+  )
+}
+
+function QuestionCard({ question, onClick, keyword }) {
   const totalVotes = question.votes_a + question.votes_b
   const percentA = totalVotes > 0 ? (question.votes_a / totalVotes) * 100 : 50
   const percentB = totalVotes > 0 ? (question.votes_b / totalVotes) * 100 : 50
@@ -25,10 +39,13 @@ function QuestionCard({ question, onClick }) {
   return (
     <div className="card question-card" onClick={onClick}>
       <div className="question-category-tag">{question.category || '职场'}</div>
-      <h3>{question.title}</h3>
+      <h3>{highlightText(question.title, keyword)}</h3>
+      {question.description && (
+        <p className="question-description">{highlightText(question.description, keyword)}</p>
+      )}
       <div className="question-options">
-        <div className="option-tag side-a">{question.option_a}</div>
-        <div className="option-tag side-b">{question.option_b}</div>
+        <div className="option-tag side-a">{highlightText(question.option_a, keyword)}</div>
+        <div className="option-tag side-b">{highlightText(question.option_b, keyword)}</div>
       </div>
       <div className="vote-bar-container">
         <div className="vote-bar-a" style={{ width: `${percentA}%` }}></div>
@@ -47,22 +64,33 @@ function QuestionCard({ question, onClick }) {
 
 export default function QuestionList() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [sort, setSort] = useState('newest')
-  const [category, setCategory] = useState('全部')
+  const [sort, setSort] = useState(searchParams.get('sort') || 'newest')
+  const [category, setCategory] = useState(searchParams.get('category') || '全部')
+  const [keyword, setKeyword] = useState(searchParams.get('keyword') || '')
+  const [searchInput, setSearchInput] = useState(searchParams.get('keyword') || '')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
 
   useEffect(() => {
+    const params = {}
+    if (sort !== 'newest') params.sort = sort
+    if (category !== '全部') params.category = category
+    if (keyword) params.keyword = keyword
+    setSearchParams(params, { replace: true })
+  }, [sort, category, keyword, setSearchParams])
+
+  useEffect(() => {
     loadQuestions()
-  }, [sort, category, page])
+  }, [sort, category, keyword, page])
 
   const loadQuestions = async () => {
     setLoading(true)
     try {
-      const data = await getQuestions({ sort, category, page, limit: 10 })
+      const data = await getQuestions({ sort, category, keyword, page, limit: 10 })
       setQuestions(data.list)
       setTotal(data.total)
     } catch (err) {
@@ -72,10 +100,24 @@ export default function QuestionList() {
     }
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault()
+    setKeyword(searchInput)
+    setPage(1)
+  }
+
+  const handleClearSearch = () => {
+    setSearchInput('')
+    setKeyword('')
+    setPage(1)
+  }
+
   const handleCreateSuccess = (newQuestion) => {
     setShowCreateModal(false)
     navigate(`/question/${newQuestion.id}`)
   }
+
+  const isSearching = keyword && keyword.trim()
 
   return (
     <div className="container">
@@ -83,6 +125,40 @@ export default function QuestionList() {
         <h1>🤔 困境选择</h1>
         <p>每个两难问题，都值得认真思考</p>
       </div>
+
+      <div className="search-container">
+        <form onSubmit={handleSearch} className="search-form">
+          <div className="search-input-wrapper">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="搜索问题标题或描述..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            {searchInput && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={handleClearSearch}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <button type="submit" className="btn btn-primary search-btn">
+            搜索
+          </button>
+        </form>
+      </div>
+
+      {isSearching && (
+        <div className="search-result-header">
+          <span className="search-keyword">"{keyword}"</span>
+          <span className="search-count">找到 {total} 个相关问题</span>
+        </div>
+      )}
 
       <div className="category-filter">
         <div 
@@ -121,14 +197,15 @@ export default function QuestionList() {
         <div className="card loading">加载中...</div>
       ) : questions.length === 0 ? (
         <div className="card empty-state">
-          <h3>还没有问题</h3>
-          <p>点击右下角按钮发布第一个两难问题吧！</p>
+          <h3>{isSearching ? '没有找到相关问题' : '还没有问题'}</h3>
+          <p>{isSearching ? '试试其他关键词吧' : '点击右下角按钮发布第一个两难问题吧！'}</p>
         </div>
       ) : (
         questions.map(q => (
           <QuestionCard 
             key={q.id} 
             question={q} 
+            keyword={keyword}
             onClick={() => navigate(`/question/${q.id}`)}
           />
         ))

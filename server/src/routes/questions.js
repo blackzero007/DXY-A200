@@ -5,13 +5,21 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  const { page = 1, limit = 10, sort = 'newest', category } = req.query;
+  const { page = 1, limit = 10, sort = 'newest', category, keyword } = req.query;
   const db = readDB();
   
   let questions = [...db.questions];
   
   if (category && category !== '全部') {
     questions = questions.filter(q => q.category === category);
+  }
+  
+  if (keyword && keyword.trim()) {
+    const kw = keyword.trim().toLowerCase();
+    questions = questions.filter(q => 
+      q.title.toLowerCase().includes(kw) || 
+      (q.description && q.description.toLowerCase().includes(kw))
+    );
   }
   
   if (sort === 'hot') {
