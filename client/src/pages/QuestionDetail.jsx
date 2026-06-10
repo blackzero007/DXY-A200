@@ -106,7 +106,15 @@ export default function QuestionDetail() {
             <p className="description">{question.description}</p>
           )}
           <p style={{ color: '#6b7280', fontSize: 14 }}>
-            由 @{question.author_name} 发布
+            由{' '}
+            <span 
+              className="user-nickname-link"
+              onClick={() => navigate(`/user/${question.author_name}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              @{question.author_name}
+            </span>{' '}
+            发布
           </p>
         </div>
 

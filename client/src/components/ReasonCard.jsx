@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { likeReason, dislikeReason, getReplies, replyReason, likeReply, dislikeReply } from '../utils/api'
 
 function formatTime(timestamp) {
@@ -20,6 +21,7 @@ function getAvatar(name) {
 }
 
 function ReplyItem({ reply, onLike, onDislike, onReply }) {
+  const navigate = useNavigate()
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [replyContent, setReplyContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -43,10 +45,20 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
     }
   }
 
+  const handleUserClick = (e, nickname) => {
+    e.stopPropagation()
+    navigate(`/user/${nickname}`)
+  }
+
   return (
     <div className="reply-item">
       <div className="reply-content">
-        <span style={{ color: '#6366f1', fontWeight: 500 }}>@{reply.author_name}</span>
+        <span 
+          className="user-nickname-link"
+          onClick={(e) => handleUserClick(e, reply.author_name)}
+        >
+          @{reply.author_name}
+        </span>
         {' '}{reply.content}
       </div>
       <div className="reply-footer">
@@ -110,11 +122,17 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
 }
 
 export default function ReasonCard({ reason, side, onUpdate }) {
+  const navigate = useNavigate()
   const [showReplies, setShowReplies] = useState(false)
   const [replies, setReplies] = useState([])
   const [replyContent, setReplyContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [loadingReplies, setLoadingReplies] = useState(false)
+
+  const handleUserClick = (e, nickname) => {
+    e.stopPropagation()
+    navigate(`/user/${nickname}`)
+  }
 
   const loadReplies = async () => {
     if (replies.length > 0) {
@@ -222,8 +240,19 @@ export default function ReasonCard({ reason, side, onUpdate }) {
       <div className="reason-content">{reason.content}</div>
       <div className="reason-footer">
         <div className="author-info">
-          <div className="avatar">{getAvatar(reason.author_name)}</div>
-          <span>@{reason.author_name}</span>
+          <div 
+            className="avatar"
+            onClick={(e) => handleUserClick(e, reason.author_name)}
+            style={{ cursor: 'pointer' }}
+          >
+            {getAvatar(reason.author_name)}
+          </div>
+          <span 
+            className="user-nickname-link"
+            onClick={(e) => handleUserClick(e, reason.author_name)}
+          >
+            @{reason.author_name}
+          </span>
           <span style={{ marginLeft: 8 }}>{formatTime(reason.created_at)}</span>
         </div>
         <div className="reason-actions">

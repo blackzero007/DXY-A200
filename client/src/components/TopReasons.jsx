@@ -1,4 +1,8 @@
+import { useNavigate } from 'react-router-dom'
+
 export default function TopReasons({ topA, topB, optionA, optionB }) {
+  const navigate = useNavigate()
+
   const getRankStyle = (rank) => {
     const styles = {
       1: { background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: 'white' },
@@ -6,6 +10,11 @@ export default function TopReasons({ topA, topB, optionA, optionB }) {
       3: { background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', color: 'white' }
     }
     return styles[rank] || {}
+  }
+
+  const handleUserClick = (e, nickname) => {
+    e.stopPropagation()
+    navigate(`/user/${nickname}`)
   }
 
   const renderTopList = (reasons, side) => (
@@ -37,7 +46,12 @@ export default function TopReasons({ topA, topB, optionA, optionB }) {
                 {reason.content}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#9ca3af' }}>
-                <span>@{reason.author_name}</span>
+                <span 
+                  className="user-nickname-link"
+                  onClick={(e) => handleUserClick(e, reason.author_name)}
+                >
+                  @{reason.author_name}
+                </span>
                 <span>👍 {reason.likes}</span>
               </div>
             </div>

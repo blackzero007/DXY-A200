@@ -118,4 +118,141 @@ router.post('/logout', authMiddleware, (req, res) => {
   res.json({ message: '退出登录成功' });
 });
 
+router.get('/profile/:nickname', (req, res) => {
+  const { nickname } = req.params;
+  const db = readDB();
+
+  const registeredUser = db.users.find(u => u.nickname === nickname);
+  const userQuestions = db.questions.filter(q => q.author_name === nickname);
+  const userReasons = db.reasons.filter(r => r.author_name === nickname);
+  const userReplies = db.replies.filter(r => r.author_name === nickname);
+
+  if (!registeredUser && userQuestions.length === 0 && userReasons.length === 0 && userReplies.length === 0) {
+    return res.status(404).json({ error: '用户不存在' });
+  }
+
+  const totalLikes = userReasons.reduce((sum, r) => sum + r.likes, 0) +
+                     userReplies.reduce((sum, r) => sum + r.likes, 0);
+
+  let earliestDate = null;
+  const allDates = [
+    ...userQuestions.map(q => q.created_at),
+    ...userReasons.map(r => r.created_at),
+    ...userReplies.map(r => r.created_at)
+  ];
+  if (allDates.length > 0) {
+    earliestDate = Math.min(...allDates);
+  }
+
+  const userInfo = registeredUser ? {
+    id: registeredUser.id,
+    nickname: registeredUser.nickname,
+    avatar: registeredUser.avatar,
+    created_at: registeredUser.created_at,
+    is_registered: true
+  } : {
+    id: null,
+    nickname,
+    avatar: null,
+    created_at: earliestDate,
+    is_registered: false
+  };
+
+  res.json({
+    user: userInfo,
+    stats: {
+      question_count: userQuestions.length,
+      reason_count: userReasons.length,
+      reply_count: userReplies.length,
+      total_likes: totalLikes
+    }
+  });
+});
+
+router.get('/profile/:nickname/questions', (req, res) => {
+  const { nickname } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+  const db = readDB();
+
+  let questions = db.questions
+    .filter(q => q.author_name === nickname)
+    .sort((a, b) => b.created_at - a.created_at)
+    .map(q => ({
+      ...q,
+      total_votes: q.votes_a + q.votes_b
+    }));
+
+  const start = (page - 1) * limit;
+  const end = start + Number(limit);
+  const paginated = questions.slice(start, end);
+
+  res.json({
+    list: paginated,
+    total: questions.length,
+    page: Number(page),
+    limit: Number(limit)
+  });
+});
+
+router.get('/profile/:nickname/reasons', (req, res) => {
+  const { nickname } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+  const db = readDB();
+
+  let reasons = db.reasons
+    .filter(r => r.author_name === nickname)
+    .sort((a, b) => b.created_at - a.created_at);
+
+  reasons = reasons.map(reason => {
+    const question = db.questions.find(q => q.id === reason.question_id);
+    return {
+      ...reason,
+      question_title: question ? question.title : null,
+      question_option: question ? (reason.side === 'A' ? question.option_a : question.option_b) : null
+    };
+  });
+
+  const start = (page - 1) * limit;
+  const end = start + Number(limit);
+  const paginated = reasons.slice(start, end);
+
+  res.json({
+    list: paginated,
+    total: reasons.length,
+    page: Number(page),
+    limit: Number(limit)
+  });
+});
+
+router.get('/profile/:nickname/replies', (req, res) => {
+  const { nickname } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+  const db = readDB();
+
+  let replies = db.replies
+    .filter(r => r.author_name === nickname)
+    .sort((a, b) => b.created_at - a.created_at);
+
+  replies = replies.map(reply => {
+    const question = db.questions.find(q => q.id === reply.question_id);
+    const reason = db.reasons.find(r => r.id === reply.reason_id);
+    return {
+      ...reply,
+      question_title: question ? question.title : null,
+      reason_content: reason ? reason.content : null
+    };
+  });
+
+  const start = (page - 1) * limit;
+  const end = start + Number(limit);
+  const paginated = replies.slice(start, end);
+
+  res.json({
+    list: paginated,
+    total: replies.length,
+    page: Number(page),
+    limit: Number(limit)
+  });
+});
+
 module.exports = router;

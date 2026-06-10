@@ -3,6 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getQuestions, CATEGORIES } from '../utils/api'
 import CreateQuestionModal from '../components/CreateQuestionModal.jsx'
 
+function handleUserClick(e, nickname, navigate) {
+  e.stopPropagation()
+  navigate(`/user/${nickname}`)
+}
+
 function formatTime(timestamp) {
   const now = Date.now()
   const diff = now - timestamp
@@ -32,6 +37,7 @@ function highlightText(text, keyword) {
 }
 
 function QuestionCard({ question, onClick, keyword }) {
+  const navigate = useNavigate()
   const totalVotes = question.votes_a + question.votes_b
   const percentA = totalVotes > 0 ? (question.votes_a / totalVotes) * 100 : 50
   const percentB = totalVotes > 0 ? (question.votes_b / totalVotes) * 100 : 50
@@ -52,7 +58,12 @@ function QuestionCard({ question, onClick, keyword }) {
         <div className="vote-bar-b" style={{ width: `${percentB}%` }}></div>
       </div>
       <div className="question-meta">
-        <span>@{question.author_name}</span>
+        <span 
+          className="user-nickname-link"
+          onClick={(e) => handleUserClick(e, question.author_name, navigate)}
+        >
+          @{question.author_name}
+        </span>
         <div className="vote-stats">
           <span>{totalVotes} 人投票</span>
           <span>{formatTime(question.created_at)}</span>

@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext.jsx'
 import Header from './components/Header.jsx'
 import QuestionList from './pages/QuestionList.jsx'
 import QuestionDetail from './pages/QuestionDetail.jsx'
+import UserProfile from './pages/UserProfile.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 
@@ -15,6 +16,7 @@ function App() {
           <Routes>
             <Route path="/" element={<QuestionList />} />
             <Route path="/question/:id" element={<QuestionDetail />} />
+            <Route path="/user/:nickname" element={<UserProfile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Routes>

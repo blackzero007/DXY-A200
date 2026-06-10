@@ -93,4 +93,20 @@ export const logout = () => {
   return api.post('/users/logout').then(res => res.data);
 };
 
+export const getUserProfile = (nickname) => {
+  return api.get(`/users/profile/${nickname}`).then(res => res.data);
+};
+
+export const getUserQuestions = (nickname, params = {}) => {
+  return api.get(`/users/profile/${nickname}/questions`, { params }).then(res => res.data);
+};
+
+export const getUserReasons = (nickname, params = {}) => {
+  return api.get(`/users/profile/${nickname}/reasons`, { params }).then(res => res.data);
+};
+
+export const getUserReplies = (nickname, params = {}) => {
+  return api.get(`/users/profile/${nickname}/replies`, { params }).then(res => res.data);
+};
+
 export default api;

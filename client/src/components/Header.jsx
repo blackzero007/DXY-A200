@@ -52,7 +52,14 @@ function Header() {
 
               {showDropdown && (
                 <div className="user-dropdown">
-                  <div className="dropdown-user-info">
+                  <div 
+                    className="dropdown-user-info"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setShowDropdown(false)
+                      navigate(`/user/${user.nickname}`)
+                    }}
+                  >
                     <div
                       className="dropdown-avatar"
                       style={{ background: user.avatar?.bgColor || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
@@ -65,6 +72,15 @@ function Header() {
                     </div>
                   </div>
                   <div className="dropdown-divider"></div>
+                  <button 
+                    className="dropdown-item" 
+                    onClick={() => {
+                      setShowDropdown(false)
+                      navigate(`/user/${user.nickname}`)
+                    }}
+                  >
+                    <span>个人主页</span>
+                  </button>
                   <button className="dropdown-item logout-btn" onClick={handleLogout}>
                     <span>退出登录</span>
                   </button>
