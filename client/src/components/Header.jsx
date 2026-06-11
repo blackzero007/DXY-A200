@@ -81,6 +81,17 @@ function Header() {
                   >
                     <span>个人主页</span>
                   </button>
+                  {user.role === 'admin' && (
+                    <button 
+                      className="dropdown-item" 
+                      onClick={() => {
+                        setShowDropdown(false)
+                        navigate('/admin')
+                      }}
+                    >
+                      <span>举报管理</span>
+                    </button>
+                  )}
                   <button className="dropdown-item logout-btn" onClick={handleLogout}>
                     <span>退出登录</span>
                   </button>

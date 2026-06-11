@@ -59,6 +59,7 @@ router.post('/register', async (req, res) => {
     password: hashedPassword,
     nickname,
     avatar,
+    role: 'user',
     created_at: Date.now()
   };
 
@@ -73,7 +74,8 @@ router.post('/register', async (req, res) => {
       id: newUser.id,
       email: newUser.email,
       nickname: newUser.nickname,
-      avatar: newUser.avatar
+      avatar: newUser.avatar,
+      role: newUser.role
     }
   });
 });
@@ -105,7 +107,8 @@ router.post('/login', async (req, res) => {
       id: user.id,
       email: user.email,
       nickname: user.nickname,
-      avatar: user.avatar
+      avatar: user.avatar,
+      role: user.role
     }
   });
 });

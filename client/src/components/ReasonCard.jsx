@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { likeReason, dislikeReason, getReplies, replyReason, likeReply, dislikeReply } from '../utils/api'
+import ReportModal from './ReportModal'
+import { useAuth } from '../contexts/AuthContext'
 
 function formatTime(timestamp) {
   const now = Date.now()
@@ -22,9 +24,11 @@ function getAvatar(name) {
 
 function ReplyItem({ reply, onLike, onDislike, onReply }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [replyContent, setReplyContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return
@@ -73,6 +77,18 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
           <button className="action-btn reply" onClick={() => setShowReplyForm(!showReplyForm)}>
             💬 回复
           </button>
+          <button 
+            className="action-btn report" 
+            onClick={() => {
+              if (!user) {
+                alert('请先登录后再举报')
+                return
+              }
+              setShowReportModal(true)
+            }}
+          >
+            🚩 举报
+          </button>
         </div>
       </div>
 
@@ -117,17 +133,27 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
           ))}
         </div>
       )}
+
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType="reply"
+        targetId={reply.id}
+        targetContent={reply.content}
+      />
     </div>
   )
 }
 
 export default function ReasonCard({ reason, side, onUpdate }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [showReplies, setShowReplies] = useState(false)
   const [replies, setReplies] = useState([])
   const [replyContent, setReplyContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [loadingReplies, setLoadingReplies] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   const handleUserClick = (e, nickname) => {
     e.stopPropagation()
@@ -265,6 +291,18 @@ export default function ReasonCard({ reason, side, onUpdate }) {
           <button className="action-btn reply" onClick={loadReplies}>
             💬 {reason.reply_count}
           </button>
+          <button 
+            className="action-btn report" 
+            onClick={() => {
+              if (!user) {
+                alert('请先登录后再举报')
+                return
+              }
+              setShowReportModal(true)
+            }}
+          >
+            🚩 举报
+          </button>
         </div>
       </div>
 
@@ -312,6 +350,14 @@ export default function ReasonCard({ reason, side, onUpdate }) {
           )}
         </div>
       )}
+
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType="reason"
+        targetId={reason.id}
+        targetContent={reason.content}
+      />
     </div>
   )
 }

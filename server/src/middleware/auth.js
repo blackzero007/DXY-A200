@@ -29,7 +29,8 @@ function authMiddleware(req, res, next) {
       id: user.id,
       email: user.email,
       nickname: user.nickname,
-      avatar: user.avatar
+      avatar: user.avatar,
+      role: user.role
     };
     
     next();

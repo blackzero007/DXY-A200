@@ -6,6 +6,7 @@ import QuestionDetail from './pages/QuestionDetail.jsx'
 import UserProfile from './pages/UserProfile.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
+import Admin from './pages/Admin.jsx'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/user/:nickname" element={<UserProfile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
       </div>

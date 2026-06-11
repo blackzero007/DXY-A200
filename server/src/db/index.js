@@ -16,7 +16,7 @@ const CATEGORIES = ['职场', '情感', '消费', '学业', '科技'];
 function readDB() {
   ensureDataDir();
   if (!fs.existsSync(dbPath)) {
-    return { questions: [], reasons: [], replies: [], users: [], sessions: [], favorites: [] };
+    return { questions: [], reasons: [], replies: [], users: [], sessions: [], favorites: [], reports: [] };
   }
   try {
     const data = fs.readFileSync(dbPath, 'utf-8');
@@ -27,11 +27,19 @@ function readDB() {
     if (!db.reasons) db.reasons = [];
     if (!db.replies) db.replies = [];
     if (!db.favorites) db.favorites = [];
+    if (!db.reports) db.reports = [];
 
     let needSave = false;
     db.questions.forEach(q => {
       if (!q.category || !CATEGORIES.includes(q.category)) {
         q.category = '职场';
+        needSave = true;
+      }
+    });
+
+    db.users.forEach(u => {
+      if (!u.role) {
+        u.role = 'user';
         needSave = true;
       }
     });

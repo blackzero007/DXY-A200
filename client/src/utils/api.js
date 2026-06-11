@@ -125,4 +125,24 @@ export const checkFavorite = (questionId) => {
   return api.get(`/users/favorites/check/${questionId}`).then(res => res.data);
 };
 
+export const getReportReasons = () => {
+  return api.get('/reports/reasons').then(res => res.data);
+};
+
+export const createReport = (data) => {
+  return api.post('/reports', data).then(res => res.data);
+};
+
+export const getReports = (params = {}) => {
+  return api.get('/reports', { params }).then(res => res.data);
+};
+
+export const updateReportStatus = (reportId, data) => {
+  return api.put(`/reports/${reportId}/status`, data).then(res => res.data);
+};
+
+export const deleteReport = (reportId) => {
+  return api.delete(`/reports/${reportId}`).then(res => res.data);
+};
+
 export default api;
