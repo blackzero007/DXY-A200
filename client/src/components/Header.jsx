@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 
 function Header() {
   const { user, logout } = useAuth();
@@ -34,6 +35,7 @@ function Header() {
         </Link>
 
         <div className="header-right">
+          {user && <NotificationBell />}
           {user ? (
             <div className="user-menu" ref={dropdownRef}>
               <button

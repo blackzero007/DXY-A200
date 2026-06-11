@@ -145,4 +145,28 @@ export const deleteReport = (reportId) => {
   return api.delete(`/reports/${reportId}`).then(res => res.data);
 };
 
+export const getNotifications = (params = {}) => {
+  return api.get('/notifications', { params }).then(res => res.data);
+};
+
+export const getUnreadNotificationCount = () => {
+  return api.get('/notifications/unread-count').then(res => res.data);
+};
+
+export const markNotificationAsRead = (notificationId) => {
+  return api.post(`/notifications/${notificationId}/read`).then(res => res.data);
+};
+
+export const markAllNotificationsAsRead = () => {
+  return api.post('/notifications/read-all').then(res => res.data);
+};
+
+export const deleteNotification = (notificationId) => {
+  return api.delete(`/notifications/${notificationId}`).then(res => res.data);
+};
+
+export const clearAllNotifications = () => {
+  return api.delete('/notifications').then(res => res.data);
+};
+
 export default api;

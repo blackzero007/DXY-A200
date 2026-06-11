@@ -32,6 +32,11 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return
+    if (!user) {
+      alert('请先登录后再回复')
+      navigate('/login')
+      return
+    }
     setSubmitting(true)
     try {
       const result = await replyReason(reply.reason_id, {
@@ -43,7 +48,12 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
       setShowReplyForm(false)
       onReply && onReply(result, reply.id)
     } catch (err) {
-      alert('回复失败：' + (err.response?.data?.error || err.message))
+      if (err.response?.status === 401) {
+        alert('请先登录后再回复')
+        navigate('/login')
+      } else {
+        alert('回复失败：' + (err.response?.data?.error || err.message))
+      }
     } finally {
       setSubmitting(false)
     }
@@ -74,7 +84,14 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
           <button className="action-btn dislike" onClick={() => onDislike(reply.id)}>
             👎 {reply.dislikes}
           </button>
-          <button className="action-btn reply" onClick={() => setShowReplyForm(!showReplyForm)}>
+          <button className="action-btn reply" onClick={() => {
+            if (!user) {
+              alert('请先登录后再回复')
+              navigate('/login')
+              return
+            }
+            setShowReplyForm(!showReplyForm)
+          }}>
             💬 回复
           </button>
           <button 
@@ -178,25 +195,50 @@ export default function ReasonCard({ reason, side, onUpdate }) {
   }
 
   const handleLike = async () => {
+    if (!user) {
+      alert('请先登录后再点赞')
+      navigate('/login')
+      return
+    }
     try {
       const updated = await likeReason(reason.id)
       onUpdate && onUpdate(updated)
     } catch (err) {
-      console.error('点赞失败:', err)
+      if (err.response?.status === 401) {
+        alert('请先登录后再点赞')
+        navigate('/login')
+      } else {
+        console.error('点赞失败:', err)
+      }
     }
   }
 
   const handleDislike = async () => {
+    if (!user) {
+      alert('请先登录后再点踩')
+      navigate('/login')
+      return
+    }
     try {
       const updated = await dislikeReason(reason.id)
       onUpdate && onUpdate(updated)
     } catch (err) {
-      console.error('点踩失败:', err)
+      if (err.response?.status === 401) {
+        alert('请先登录后再点踩')
+        navigate('/login')
+      } else {
+        console.error('点踩失败:', err)
+      }
     }
   }
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return
+    if (!user) {
+      alert('请先登录后再回复')
+      navigate('/login')
+      return
+    }
     setSubmitting(true)
     try {
       const result = await replyReason(reason.id, {
@@ -208,27 +250,52 @@ export default function ReasonCard({ reason, side, onUpdate }) {
       setShowReplies(true)
       onUpdate && onUpdate({ ...reason, reply_count: reason.reply_count + 1 })
     } catch (err) {
-      alert('回复失败：' + (err.response?.data?.error || err.message))
+      if (err.response?.status === 401) {
+        alert('请先登录后再回复')
+        navigate('/login')
+      } else {
+        alert('回复失败：' + (err.response?.data?.error || err.message))
+      }
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleReplyLike = async (replyId) => {
+    if (!user) {
+      alert('请先登录后再点赞')
+      navigate('/login')
+      return
+    }
     try {
       await likeReply(replyId)
       setReplies(prev => updateReplyInTree(prev, replyId, r => ({ ...r, likes: r.likes + 1 })))
     } catch (err) {
-      console.error('点赞失败:', err)
+      if (err.response?.status === 401) {
+        alert('请先登录后再点赞')
+        navigate('/login')
+      } else {
+        console.error('点赞失败:', err)
+      }
     }
   }
 
   const handleReplyDislike = async (replyId) => {
+    if (!user) {
+      alert('请先登录后再点踩')
+      navigate('/login')
+      return
+    }
     try {
       await dislikeReply(replyId)
       setReplies(prev => updateReplyInTree(prev, replyId, r => ({ ...r, dislikes: r.dislikes + 1 })))
     } catch (err) {
-      console.error('点踩失败:', err)
+      if (err.response?.status === 401) {
+        alert('请先登录后再点踩')
+        navigate('/login')
+      } else {
+        console.error('点踩失败:', err)
+      }
     }
   }
 

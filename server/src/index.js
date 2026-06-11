@@ -5,9 +5,10 @@ const fs = require('fs');
 const { initDatabase } = require('./db');
 
 const questionsRouter = require('./routes/questions');
-const reasonsRouter = require('./routes/reasons');
+const { router: reasonsRouter } = require('./routes/reasons');
 const usersRouter = require('./routes/users');
 const reportsRouter = require('./routes/reports');
+const { router: notificationsRouter } = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,7 @@ app.use('/api/questions', questionsRouter);
 app.use('/api/reasons', reasonsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/reports', reportsRouter);
+app.use('/api/notifications', notificationsRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });

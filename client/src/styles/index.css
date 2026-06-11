@@ -1789,3 +1789,280 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.notification-container {
+  position: relative;
+  margin-right: 12px;
+}
+
+.notification-bell-btn {
+  position: relative;
+  background: #f3f4f6;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.notification-bell-btn:hover {
+  background: #e5e7eb;
+}
+
+.notification-bell-icon {
+  font-size: 20px;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 380px;
+  max-height: 500px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  z-index: 200;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: notificationFadeIn 0.2s ease;
+}
+
+@keyframes notificationFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.notification-panel-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1f2937;
+}
+
+.notification-panel-count {
+  color: #6366f1;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.notification-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.notification-action-btn {
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.notification-action-btn:hover {
+  background: #eef2ff;
+}
+
+.notification-action-btn.danger {
+  color: #ef4444;
+}
+
+.notification-action-btn.danger:hover {
+  background: #fef2f2;
+}
+
+.notification-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 420px;
+}
+
+.notification-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.notification-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.notification-item:hover {
+  background: #f9fafb;
+}
+
+.notification-item.unread {
+  background: #eef2ff;
+}
+
+.notification-item.unread:hover {
+  background: #e0e7ff;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: #f3f4f6;
+}
+
+.notification-type-like .notification-icon {
+  background: #dcfce7;
+}
+
+.notification-type-dislike .notification-icon {
+  background: #fee2e2;
+}
+
+.notification-type-reply .notification-icon {
+  background: #dbeafe;
+}
+
+.notification-content-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-content {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.notification-question {
+  font-size: 12px;
+  color: #6366f1;
+  padding: 4px 8px;
+  background: #f5f3ff;
+  border-radius: 4px;
+  margin-top: 6px;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.notification-delete-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #d1d5db;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.notification-item:hover .notification-delete-btn {
+  opacity: 1;
+}
+
+.notification-delete-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.notification-unread-dot {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #6366f1;
+  border-radius: 50%;
+}
+
+@media (max-width: 480px) {
+  .notification-panel {
+    width: calc(100vw - 40px);
+    right: -20px;
+  }
+}
