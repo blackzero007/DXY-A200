@@ -2,12 +2,28 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
+import { getAllDrafts } from '../utils/draft';
 
 function Header() {
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [draftCount, setDraftCount] = useState(0);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const updateDraftCount = () => {
+      setDraftCount(getAllDrafts().length);
+    };
+    updateDraftCount();
+    const interval = setInterval(updateDraftCount, 2000);
+    const handleStorage = () => updateDraftCount();
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -82,6 +98,34 @@ function Header() {
                     }}
                   >
                     <span>个人主页</span>
+                  </button>
+                  <button 
+                    className="dropdown-item" 
+                    onClick={() => {
+                      setShowDropdown(false)
+                      navigate('/drafts')
+                    }}
+                  >
+                    <span style={{ position: 'relative', display: 'inline-block' }}>
+                      📝 我的草稿
+                      {draftCount > 0 && (
+                        <span style={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -18,
+                          background: '#ef4444',
+                          color: '#fff',
+                          fontSize: 10,
+                          padding: '1px 6px',
+                          borderRadius: 10,
+                          fontWeight: 'bold',
+                          minWidth: 16,
+                          textAlign: 'center'
+                        }}>
+                          {draftCount > 99 ? '99+' : draftCount}
+                        </span>
+                      )}
+                    </span>
                   </button>
                   {user.role === 'admin' && (
                     <button 

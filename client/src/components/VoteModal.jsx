@@ -1,15 +1,94 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { voteQuestion } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
+import { getDraftByTypeAndKey, saveDraft, deleteDraftByTypeAndKey, formatDraftTime } from '../utils/draft'
 
-export default function VoteModal({ question, onClose, onSuccess }) {
+export default function VoteModal({ question, onClose, onSuccess, initialDraft }) {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const DRAFT_TYPE = 'vote'
+  const DRAFT_KEY = question?.id?.toString() || 'current'
+
   const [side, setSide] = useState(null)
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [lastSavedAt, setLastSavedAt] = useState(null)
+  const [showRestoreTip, setShowRestoreTip] = useState(false)
+  const saveTimerRef = useRef(null)
+  const formChangedRef = useRef(false)
+
+  useEffect(() => {
+    if (initialDraft) {
+      setSide(initialDraft.data.side || null)
+      setContent(initialDraft.data.content || '')
+      setLastSavedAt(initialDraft.updated_at)
+      formChangedRef.current = true
+    } else if (question?.id) {
+      const existingDraft = getDraftByTypeAndKey(DRAFT_TYPE, DRAFT_KEY)
+      if (existingDraft) {
+        setShowRestoreTip(true)
+      }
+    }
+  }, [initialDraft, question?.id])
+
+  const restoreDraft = () => {
+    const draft = getDraftByTypeAndKey(DRAFT_TYPE, DRAFT_KEY)
+    if (draft) {
+      setSide(draft.data.side || null)
+      setContent(draft.data.content || '')
+      setLastSavedAt(draft.updated_at)
+      formChangedRef.current = true
+    }
+    setShowRestoreTip(false)
+  }
+
+  const discardDraft = () => {
+    setShowRestoreTip(false)
+  }
+
+  const scheduleSave = () => {
+    formChangedRef.current = true
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+    }
+    saveTimerRef.current = setTimeout(() => {
+      doSaveDraft()
+    }, 800)
+  }
+
+  const doSaveDraft = () => {
+    if (!formChangedRef.current) return
+    const hasContent = side || content.trim()
+    if (!hasContent) return
+
+    const saved = saveDraft({
+      type: DRAFT_TYPE,
+      key: initialDraft?.id || DRAFT_KEY,
+      question_title: question?.title,
+      question_option_a: question?.option_a,
+      question_option_b: question?.option_b,
+      data: {
+        side,
+        content
+      }
+    })
+    setLastSavedAt(saved.updated_at)
+  }
+
+  useEffect(() => {
+    scheduleSave()
+  }, [side, content])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+      }
+      doSaveDraft()
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -36,6 +115,7 @@ export default function VoteModal({ question, onClose, onSuccess }) {
         side,
         content: content.trim()
       })
+      deleteDraftByTypeAndKey(DRAFT_TYPE, initialDraft?.id || DRAFT_KEY)
       onSuccess && onSuccess(result)
     } catch (err) {
       if (err.response?.status === 401) {
@@ -53,6 +133,66 @@ export default function VoteModal({ question, onClose, onSuccess }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal vote-modal" onClick={e => e.stopPropagation()}>
         <h2>说出你的选择</h2>
+
+        {showRestoreTip && (
+          <div style={{
+            background: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 16,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <span style={{ color: '#0369a1' }}>
+              📝 检测到未完成的草稿（{formatDraftTime(getDraftByTypeAndKey(DRAFT_TYPE, DRAFT_KEY)?.updated_at)}），是否恢复？
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={discardDraft}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border: '1px solid #d1d5db',
+                  background: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                放弃
+              </button>
+              <button
+                type="button"
+                onClick={restoreDraft}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border: 'none',
+                  background: '#0284c7',
+                  color: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                恢复
+              </button>
+            </div>
+          </div>
+        )}
+
+        {lastSavedAt && (
+          <div style={{
+            fontSize: 12,
+            color: '#6b7280',
+            marginBottom: 12,
+            textAlign: 'right'
+          }}>
+            ✅ 草稿已保存于 {formatDraftTime(lastSavedAt)}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="vote-options">

@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createQuestion, CATEGORIES } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
+import { getDraftByTypeAndKey, saveDraft, deleteDraftByTypeAndKey, formatDraftTime } from '../utils/draft'
 
-export default function CreateQuestionModal({ onClose, onSuccess }) {
+const DRAFT_TYPE = 'question'
+const DRAFT_KEY = 'new'
+
+export default function CreateQuestionModal({ onClose, onSuccess, initialDraft }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
@@ -13,6 +17,87 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
   const [category, setCategory] = useState(CATEGORIES[0])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [lastSavedAt, setLastSavedAt] = useState(null)
+  const [showRestoreTip, setShowRestoreTip] = useState(false)
+  const saveTimerRef = useRef(null)
+  const formChangedRef = useRef(false)
+
+  useEffect(() => {
+    if (initialDraft) {
+      setTitle(initialDraft.data.title || '')
+      setOptionA(initialDraft.data.optionA || '')
+      setOptionB(initialDraft.data.optionB || '')
+      setDescription(initialDraft.data.description || '')
+      setCategory(initialDraft.data.category || CATEGORIES[0])
+      setLastSavedAt(initialDraft.updated_at)
+      formChangedRef.current = true
+    } else {
+      const existingDraft = getDraftByTypeAndKey(DRAFT_TYPE, DRAFT_KEY)
+      if (existingDraft) {
+        setShowRestoreTip(true)
+      }
+    }
+  }, [initialDraft])
+
+  const restoreDraft = () => {
+    const draft = getDraftByTypeAndKey(DRAFT_TYPE, DRAFT_KEY)
+    if (draft) {
+      setTitle(draft.data.title || '')
+      setOptionA(draft.data.optionA || '')
+      setOptionB(draft.data.optionB || '')
+      setDescription(draft.data.description || '')
+      setCategory(draft.data.category || CATEGORIES[0])
+      setLastSavedAt(draft.updated_at)
+      formChangedRef.current = true
+    }
+    setShowRestoreTip(false)
+  }
+
+  const discardDraft = () => {
+    setShowRestoreTip(false)
+  }
+
+  const scheduleSave = () => {
+    formChangedRef.current = true
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+    }
+    saveTimerRef.current = setTimeout(() => {
+      doSaveDraft()
+    }, 800)
+  }
+
+  const doSaveDraft = () => {
+    if (!formChangedRef.current) return
+    const hasContent = title.trim() || optionA.trim() || optionB.trim() || description.trim()
+    if (!hasContent) return
+
+    const saved = saveDraft({
+      type: DRAFT_TYPE,
+      key: initialDraft?.id || DRAFT_KEY,
+      data: {
+        title,
+        optionA,
+        optionB,
+        description,
+        category
+      }
+    })
+    setLastSavedAt(saved.updated_at)
+  }
+
+  useEffect(() => {
+    scheduleSave()
+  }, [title, optionA, optionB, description, category])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+      }
+      doSaveDraft()
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -46,6 +131,7 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
         description: description.trim() || null,
         category
       })
+      deleteDraftByTypeAndKey(DRAFT_TYPE, initialDraft?.id || DRAFT_KEY)
       onSuccess && onSuccess(result)
     } catch (err) {
       if (err.response?.status === 401) {
@@ -63,6 +149,66 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>发布两难问题</h2>
+
+        {showRestoreTip && (
+          <div className="draft-restore-tip" style={{
+            background: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 16,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <span style={{ color: '#0369a1' }}>
+              📝 检测到未完成的草稿（{formatDraftTime(getDraftByTypeAndKey(DRAFT_TYPE, DRAFT_KEY)?.updated_at)}），是否恢复？
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={discardDraft}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border: '1px solid #d1d5db',
+                  background: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                放弃
+              </button>
+              <button
+                type="button"
+                onClick={restoreDraft}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border: 'none',
+                  background: '#0284c7',
+                  color: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                恢复
+              </button>
+            </div>
+          </div>
+        )}
+
+        {lastSavedAt && (
+          <div style={{
+            fontSize: 12,
+            color: '#6b7280',
+            marginBottom: 12,
+            textAlign: 'right'
+          }}>
+            ✅ 草稿已保存于 {formatDraftTime(lastSavedAt)}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">

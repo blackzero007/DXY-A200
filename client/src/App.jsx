@@ -7,6 +7,7 @@ import UserProfile from './pages/UserProfile.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Admin from './pages/Admin.jsx'
+import DraftList from './pages/DraftList.jsx'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<QuestionList />} />
             <Route path="/question/:id" element={<QuestionDetail />} />
             <Route path="/user/:nickname" element={<UserProfile />} />
+            <Route path="/drafts" element={<DraftList />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<Admin />} />
