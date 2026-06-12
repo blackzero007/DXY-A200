@@ -1,12 +1,15 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { createQuestion, CATEGORIES } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function CreateQuestionModal({ onClose, onSuccess }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [optionA, setOptionA] = useState('')
   const [optionB, setOptionB] = useState('')
   const [description, setDescription] = useState('')
-  const [authorName, setAuthorName] = useState('')
   const [category, setCategory] = useState(CATEGORIES[0])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -14,6 +17,12 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!user) {
+      alert('请先登录后再发布问题')
+      navigate('/login')
+      return
+    }
 
     if (!title.trim()) {
       setError('请输入问题标题')
@@ -35,12 +44,16 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
         option_a: optionA.trim(),
         option_b: optionB.trim(),
         description: description.trim() || null,
-        author_name: authorName.trim() || '匿名用户',
         category
       })
       onSuccess && onSuccess(result)
     } catch (err) {
-      setError(err.response?.data?.error || '发布失败，请重试')
+      if (err.response?.status === 401) {
+        alert('请先登录后再发布问题')
+        navigate('/login')
+      } else {
+        setError(err.response?.data?.error || '发布失败，请重试')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -113,16 +126,11 @@ export default function CreateQuestionModal({ onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>你的昵称（可选）</label>
-            <input
-              type="text"
-              placeholder="不填则为匿名用户"
-              value={authorName}
-              onChange={e => setAuthorName(e.target.value)}
-              maxLength={20}
-            />
-          </div>
+          {user && (
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16, background: '#f9fafb', padding: '8px 12px', borderRadius: 8 }}>
+              将以 <strong style={{ color: '#1f2937' }}>@{user.nickname}</strong> 的身份发布
+            </div>
+          )}
 
           {error && (
             <div style={{ color: '#ef4444', marginBottom: 16, fontSize: 14 }}>

@@ -1,6 +1,7 @@
 const express = require('express');
 const { readDB, writeDB } = require('../db');
 const { v4: uuidv4 } = require('uuid');
+const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -90,7 +91,7 @@ router.get('/:id/top-reasons', (req, res) => {
 
 const CATEGORIES = ['职场', '情感', '消费', '学业', '科技'];
 
-router.post('/', (req, res) => {
+router.post('/', authMiddleware, (req, res) => {
   const { title, option_a, option_b, description, author_name, category } = req.body;
 
   if (!title || !option_a || !option_b) {
@@ -115,7 +116,8 @@ router.post('/', (req, res) => {
     option_a,
     option_b,
     description: description || null,
-    author_name: author_name || '匿名用户',
+    author_name: req.user.nickname,
+    user_id: req.user.id,
     category: category || '职场',
     created_at: now,
     votes_a: 0,
@@ -132,9 +134,9 @@ router.post('/', (req, res) => {
   });
 });
 
-router.post('/:id/vote', (req, res) => {
+router.post('/:id/vote', authMiddleware, (req, res) => {
   const { id } = req.params;
-  const { side, content, author_name } = req.body;
+  const { side, content } = req.body;
 
   if (!side || !['A', 'B'].includes(side)) {
     return res.status(400).json({ error: '请选择支持哪一边' });
@@ -159,7 +161,8 @@ router.post('/:id/vote', (req, res) => {
     question_id: id,
     side,
     content: content.trim(),
-    author_name: author_name || '匿名用户',
+    author_name: req.user.nickname,
+    user_id: req.user.id,
     created_at: now,
     likes: 0,
     dislikes: 0,

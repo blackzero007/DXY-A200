@@ -6,8 +6,15 @@ const { createNotification } = require('./notifications');
 
 const router = express.Router();
 
-function findUserByNickname(db, nickname) {
-  return db.users.find(u => u.nickname === nickname);
+function findTargetUser(db, item) {
+  if (item.user_id) {
+    const user = db.users.find(u => u.id === item.user_id);
+    if (user) return user;
+  }
+  if (item.author_name) {
+    return db.users.find(u => u.nickname === item.author_name);
+  }
+  return null;
 }
 
 function truncateContent(content, maxLength = 50) {
@@ -26,7 +33,7 @@ router.post('/:id/like', authMiddleware, (req, res) => {
 
   reason.likes += 1;
 
-  const reasonAuthor = findUserByNickname(db, reason.author_name);
+  const reasonAuthor = findTargetUser(db, reason);
   if (reasonAuthor && reasonAuthor.id !== req.user.id) {
     const question = db.questions.find(q => q.id === reason.question_id);
     createNotification(db, {
@@ -56,7 +63,7 @@ router.post('/:id/dislike', authMiddleware, (req, res) => {
 
   reason.dislikes += 1;
 
-  const reasonAuthor = findUserByNickname(db, reason.author_name);
+  const reasonAuthor = findTargetUser(db, reason);
   if (reasonAuthor && reasonAuthor.id !== req.user.id) {
     const question = db.questions.find(q => q.id === reason.question_id);
     createNotification(db, {
@@ -141,6 +148,7 @@ router.post('/:id/reply', authMiddleware, (req, res) => {
     parent_id: parent_id || null,
     content: content.trim(),
     author_name: authorName,
+    user_id: req.user.id,
     created_at: now,
     likes: 0,
     dislikes: 0
@@ -150,7 +158,7 @@ router.post('/:id/reply', authMiddleware, (req, res) => {
   
   reason.reply_count += 1;
 
-  const reasonAuthor = findUserByNickname(db, reason.author_name);
+  const reasonAuthor = findTargetUser(db, reason);
   if (reasonAuthor && reasonAuthor.id !== req.user.id) {
     const question = db.questions.find(q => q.id === qId);
     createNotification(db, {
@@ -168,7 +176,7 @@ router.post('/:id/reply', authMiddleware, (req, res) => {
   if (parent_id) {
     const parentReply = db.replies.find(r => r.id === parent_id);
     if (parentReply) {
-      const parentAuthor = findUserByNickname(db, parentReply.author_name);
+      const parentAuthor = findTargetUser(db, parentReply);
       if (parentAuthor && parentAuthor.id !== req.user.id && (!reasonAuthor || parentAuthor.id !== reasonAuthor.id)) {
         createNotification(db, {
           user_id: parentAuthor.id,
@@ -200,7 +208,7 @@ router.post('/replies/:replyId/like', authMiddleware, (req, res) => {
 
   reply.likes += 1;
 
-  const replyAuthor = findUserByNickname(db, reply.author_name);
+  const replyAuthor = findTargetUser(db, reply);
   if (replyAuthor && replyAuthor.id !== req.user.id) {
     createNotification(db, {
       user_id: replyAuthor.id,
@@ -230,7 +238,7 @@ router.post('/replies/:replyId/dislike', authMiddleware, (req, res) => {
 
   reply.dislikes += 1;
 
-  const replyAuthor = findUserByNickname(db, reply.author_name);
+  const replyAuthor = findTargetUser(db, reply);
   if (replyAuthor && replyAuthor.id !== req.user.id) {
     createNotification(db, {
       user_id: replyAuthor.id,

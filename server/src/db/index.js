@@ -45,6 +45,22 @@ function readDB() {
       }
     });
 
+    db.reasons.forEach(r => {
+      if (r.user_id === undefined) {
+        const matchedUser = db.users.find(u => u.nickname === r.author_name);
+        r.user_id = matchedUser ? matchedUser.id : null;
+        needSave = true;
+      }
+    });
+
+    db.replies.forEach(r => {
+      if (r.user_id === undefined) {
+        const matchedUser = db.users.find(u => u.nickname === r.author_name);
+        r.user_id = matchedUser ? matchedUser.id : null;
+        needSave = true;
+      }
+    });
+
     if (needSave) {
       writeDB(db);
     }

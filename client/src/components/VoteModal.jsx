@@ -1,16 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { voteQuestion } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function VoteModal({ question, onClose, onSuccess }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [side, setSide] = useState(null)
   const [content, setContent] = useState('')
-  const [authorName, setAuthorName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!user) {
+      alert('请先登录后再发表理由')
+      navigate('/login')
+      return
+    }
 
     if (!side) {
       setError('请选择支持哪一边')
@@ -25,12 +34,16 @@ export default function VoteModal({ question, onClose, onSuccess }) {
     try {
       const result = await voteQuestion(question.id, {
         side,
-        content: content.trim(),
-        author_name: authorName.trim() || '匿名用户'
+        content: content.trim()
       })
       onSuccess && onSuccess(result)
     } catch (err) {
-      setError(err.response?.data?.error || '提交失败，请重试')
+      if (err.response?.status === 401) {
+        alert('请先登录后再发表理由')
+        navigate('/login')
+      } else {
+        setError(err.response?.data?.error || '提交失败，请重试')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -77,16 +90,11 @@ export default function VoteModal({ question, onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>你的昵称（可选）</label>
-            <input
-              type="text"
-              placeholder="不填则为匿名用户"
-              value={authorName}
-              onChange={e => setAuthorName(e.target.value)}
-              maxLength={20}
-            />
-          </div>
+          {user && (
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16, background: '#f9fafb', padding: '8px 12px', borderRadius: 8 }}>
+              将以 <strong style={{ color: '#1f2937' }}>@{user.nickname}</strong> 的身份发表
+            </div>
+          )}
 
           {error && (
             <div style={{ color: '#ef4444', marginBottom: 16, fontSize: 14 }}>
