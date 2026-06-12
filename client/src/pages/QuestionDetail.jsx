@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getQuestion, getTopReasons, checkFavorite, addFavorite, removeFavorite } from '../utils/api'
+import { getQuestion, getTopReasons, checkFavorite, addFavorite, removeFavorite, getQuestionStatistics } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 import ReasonCard from '../components/ReasonCard.jsx'
 import VoteModal from '../components/VoteModal.jsx'
 import TopReasons from '../components/TopReasons.jsx'
+import VoteStatistics from '../components/VoteStatistics.jsx'
 
 export default function QuestionDetail() {
   const { id } = useParams()
@@ -16,14 +17,29 @@ export default function QuestionDetail() {
   const [showVoteModal, setShowVoteModal] = useState(false)
   const [isFavorited, setIsFavorited] = useState(false)
   const [favoriteLoading, setFavoriteLoading] = useState(false)
+  const [statistics, setStatistics] = useState(null)
+  const [statisticsLoading, setStatisticsLoading] = useState(true)
 
   useEffect(() => {
     loadQuestion()
     loadTopReasons()
+    loadStatistics()
     if (user) {
       loadFavoriteStatus()
     }
   }, [id, user])
+
+  const loadStatistics = async () => {
+    setStatisticsLoading(true)
+    try {
+      const data = await getQuestionStatistics(id)
+      setStatistics(data)
+    } catch (err) {
+      console.error('加载统计数据失败:', err)
+    } finally {
+      setStatisticsLoading(false)
+    }
+  }
 
   const loadFavoriteStatus = async () => {
     try {
@@ -90,6 +106,7 @@ export default function QuestionDetail() {
       }
     }))
     loadTopReasons()
+    loadStatistics()
   }
 
   const handleReasonUpdate = (updatedReason, side) => {
@@ -196,6 +213,8 @@ export default function QuestionDetail() {
         optionA={question.option_a}
         optionB={question.option_b}
       />
+
+      <VoteStatistics statistics={statistics} loading={statisticsLoading} />
 
       <div className="vote-sides-container">
         <div className="side-column">

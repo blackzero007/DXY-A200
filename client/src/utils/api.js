@@ -45,6 +45,10 @@ export const getTopReasons = (id) => {
   return api.get(`/questions/${id}/top-reasons`).then(res => res.data);
 };
 
+export const getQuestionStatistics = (id) => {
+  return api.get(`/questions/${id}/statistics`).then(res => res.data);
+};
+
 export const createQuestion = (data) => {
   return api.post('/questions', data).then(res => res.data);
 };

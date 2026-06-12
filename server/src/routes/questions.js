@@ -89,6 +89,67 @@ router.get('/:id/top-reasons', (req, res) => {
   res.json({ A: topA, B: topB });
 });
 
+router.get('/:id/statistics', (req, res) => {
+  const { id } = req.params;
+  const db = readDB();
+
+  const question = db.questions.find(q => q.id === id);
+  if (!question) {
+    return res.status(404).json({ error: '问题不存在' });
+  }
+
+  const reasons = db.reasons.filter(r => r.question_id === id);
+  const votesA = question.votes_a;
+  const votesB = question.votes_b;
+  const totalVotes = votesA + votesB;
+
+  const uniqueVoters = new Set();
+  reasons.forEach(r => {
+    if (r.user_id) {
+      uniqueVoters.add(r.user_id);
+    } else {
+      uniqueVoters.add(r.author_name);
+    }
+  });
+
+  const dailyMap = {};
+  const startTime = question.created_at;
+  const now = Date.now();
+  const oneDay = 86400000;
+
+  for (let t = startTime; t <= now + oneDay; t += oneDay) {
+    const date = new Date(t);
+    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+    dailyMap[dateStr] = { date: dateStr, A: 0, B: 0 };
+  }
+
+  reasons.forEach(r => {
+    const date = new Date(r.created_at);
+    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+    if (dailyMap[dateStr]) {
+      dailyMap[dateStr][r.side] += 1;
+    }
+  });
+
+  const dailyTrend = Object.values(dailyMap).sort((a, b) => {
+    const [mA, dA] = a.date.split('/').map(Number);
+    const [mB, dB] = b.date.split('/').map(Number);
+    return (mA - mB) || (dA - dB);
+  });
+
+  res.json({
+    dailyTrend,
+    totalVoters: uniqueVoters.size,
+    votesA,
+    votesB,
+    totalVotes,
+    percentA: totalVotes > 0 ? (votesA / totalVotes) * 100 : 0,
+    percentB: totalVotes > 0 ? (votesB / totalVotes) * 100 : 0,
+    optionA: question.option_a,
+    optionB: question.option_b
+  });
+});
+
 const CATEGORIES = ['职场', '情感', '消费', '学业', '科技'];
 
 router.post('/', authMiddleware, (req, res) => {
