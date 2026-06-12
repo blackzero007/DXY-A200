@@ -113,11 +113,17 @@ router.get('/:id/statistics', (req, res) => {
   });
 
   const dailyMap = {};
-  const startTime = question.created_at;
-  const now = Date.now();
   const oneDay = 86400000;
 
-  for (let t = startTime; t <= now + oneDay; t += oneDay) {
+  const startDate = new Date(question.created_at);
+  startDate.setHours(0, 0, 0, 0);
+  const startTime = startDate.getTime();
+
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const todayTime = todayDate.getTime();
+
+  for (let t = startTime; t <= todayTime; t += oneDay) {
     const date = new Date(t);
     const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
     dailyMap[dateStr] = { date: dateStr, A: 0, B: 0 };
