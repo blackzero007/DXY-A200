@@ -61,9 +61,13 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
   const [showReportModal, setShowReportModal] = useState(false)
   const [nestedExpanded, setNestedExpanded] = useState(false)
   const [showCopyToast, setShowCopyToast] = useState(false)
+  const [contentExpanded, setContentExpanded] = useState(false)
 
   const COLLAPSE_THRESHOLD = 5
   const VISIBLE_WHEN_COLLAPSED = 2
+  const CONTENT_COLLAPSE_THRESHOLD = 200
+  const CONTENT_VISIBLE_LENGTH = 100
+  const MAX_REPLY_LENGTH = 500
 
   const handleCopy = async () => {
     const success = await copyToClipboard(reply.content)
@@ -107,6 +111,11 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
     navigate(`/user/${encodeURIComponent(nickname)}`)
   }
 
+  const isLongContent = reply.content.length > CONTENT_COLLAPSE_THRESHOLD
+  const displayContent = isLongContent && !contentExpanded
+    ? reply.content.slice(0, CONTENT_VISIBLE_LENGTH)
+    : reply.content
+
   return (
     <div className="reply-item">
       <div className="reply-content-wrapper">
@@ -117,7 +126,26 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
           >
             @{reply.author_name}
           </span>
-          {' '}{reply.content}
+          {' '}{displayContent}
+          {isLongContent && !contentExpanded && (
+            <span>
+              ...
+              <button
+                className="expand-content-btn"
+                onClick={() => setContentExpanded(true)}
+              >
+                展开全文
+              </button>
+            </span>
+          )}
+          {isLongContent && contentExpanded && (
+            <button
+              className="expand-content-btn"
+              onClick={() => setContentExpanded(false)}
+            >
+              收起
+            </button>
+          )}
         </div>
         <button className="copy-btn" onClick={handleCopy} title="复制内容">
           📋
@@ -164,24 +192,30 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
             placeholder={`回复 @${reply.author_name}...`}
             value={replyContent}
             onChange={e => setReplyContent(e.target.value)}
+            maxLength={MAX_REPLY_LENGTH}
             rows={2}
           />
-          <div className="reply-form-actions">
-            <button 
-              className="btn btn-outline" 
-              size="small"
-              onClick={() => setShowReplyForm(false)}
-            >
-              取消
-            </button>
-            <button 
-              className="btn btn-primary" 
-              size="small"
-              onClick={handleSubmitReply}
-              disabled={submitting || !replyContent.trim()}
-            >
-              {submitting ? '发送中...' : '发送'}
-            </button>
+          <div className="reply-form-footer">
+            <div className="char-count">
+              {replyContent.length}/{MAX_REPLY_LENGTH}
+            </div>
+            <div className="reply-form-actions">
+              <button 
+                className="btn btn-outline" 
+                size="small"
+                onClick={() => setShowReplyForm(false)}
+              >
+                取消
+              </button>
+              <button 
+                className="btn btn-primary" 
+                size="small"
+                onClick={handleSubmitReply}
+                disabled={submitting || !replyContent.trim()}
+              >
+                {submitting ? '发送中...' : '发送'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -237,6 +271,11 @@ export default function ReasonCard({ reason, side, onUpdate }) {
   const [loadingReplies, setLoadingReplies] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [showCopyToast, setShowCopyToast] = useState(false)
+  const [contentExpanded, setContentExpanded] = useState(false)
+
+  const CONTENT_COLLAPSE_THRESHOLD = 200
+  const CONTENT_VISIBLE_LENGTH = 100
+  const MAX_REPLY_LENGTH = 500
 
   const handleCopy = async () => {
     const success = await copyToClipboard(reason.content)
@@ -402,6 +441,11 @@ export default function ReasonCard({ reason, side, onUpdate }) {
     })
   }
 
+  const isLongContent = reason.content.length > CONTENT_COLLAPSE_THRESHOLD
+  const displayContent = isLongContent && !contentExpanded
+    ? reason.content.slice(0, CONTENT_VISIBLE_LENGTH)
+    : reason.content
+
   return (
     <div className={`reason-card side-${side.toLowerCase()}`}>
       <div className="reason-content-wrapper">
@@ -412,7 +456,26 @@ export default function ReasonCard({ reason, side, onUpdate }) {
           {reason.changed_from && (
             <span className="changed-from-badge">改票自{reason.changed_from}方</span>
           )}
-          {reason.content}
+          {displayContent}
+          {isLongContent && !contentExpanded && (
+            <span>
+              ...
+              <button
+                className="expand-content-btn"
+                onClick={() => setContentExpanded(true)}
+              >
+                展开全文
+              </button>
+            </span>
+          )}
+          {isLongContent && contentExpanded && (
+            <button
+              className="expand-content-btn"
+              onClick={() => setContentExpanded(false)}
+            >
+              收起
+            </button>
+          )}
         </div>
         <button className="copy-btn" onClick={handleCopy} title="复制内容">
           📋
@@ -466,17 +529,23 @@ export default function ReasonCard({ reason, side, onUpdate }) {
           placeholder="我有话说..."
           value={replyContent}
           onChange={e => setReplyContent(e.target.value)}
+          maxLength={MAX_REPLY_LENGTH}
           rows={2}
         />
-        <div className="reply-form-actions">
-          <button 
-            className="btn btn-primary" 
-            onClick={handleSubmitReply}
-            disabled={submitting || !replyContent.trim()}
-            style={{ fontSize: 13, padding: '6px 14px' }}
-          >
-            {submitting ? '发送中...' : '发送'}
-          </button>
+        <div className="reply-form-footer">
+          <div className="char-count">
+            {replyContent.length}/{MAX_REPLY_LENGTH}
+          </div>
+          <div className="reply-form-actions">
+            <button 
+              className="btn btn-primary" 
+              onClick={handleSubmitReply}
+              disabled={submitting || !replyContent.trim()}
+              style={{ fontSize: 13, padding: '6px 14px' }}
+            >
+              {submitting ? '发送中...' : '发送'}
+            </button>
+          </div>
         </div>
       </div>
 

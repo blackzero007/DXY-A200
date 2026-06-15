@@ -2816,6 +2816,34 @@ body {
   padding-top: 8px;
 }
 
+.expand-content-btn {
+  display: inline;
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.expand-content-btn:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+.reply-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.reply-form-footer .char-count {
+  margin-top: 0;
+}
+
 @media (max-width: 768px) {
   .preview-modal {
     max-width: 100%;

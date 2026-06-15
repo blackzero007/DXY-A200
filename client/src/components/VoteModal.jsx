@@ -299,7 +299,7 @@ export default function VoteModal({ question, myVote, onClose, onSuccess, initia
               maxLength={500}
               rows={4}
             />
-            <div style={{ textAlign: 'right', fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
+            <div className="char-count">
               {content.length}/500
             </div>
           </div>

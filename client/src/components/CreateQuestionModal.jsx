@@ -417,6 +417,9 @@ export default function CreateQuestionModal({ onClose, onSuccess, initialDraft }
                 onChange={e => setDescription(e.target.value)}
                 maxLength={500}
               />
+              <div className="char-count">
+                {description.length}/500
+              </div>
             </div>
 
             <div className="form-group">
