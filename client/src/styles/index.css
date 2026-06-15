@@ -376,13 +376,13 @@ body {
 .vote-bar-a {
   height: 100%;
   background: linear-gradient(90deg, #ec4899, #f472b6);
-  transition: width 0.5s ease;
+  transition: width 0.8s ease-in-out;
 }
 
 .vote-bar-b {
   height: 100%;
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
-  transition: width 0.5s ease;
+  transition: width 0.8s ease-in-out;
 }
 
 .reason-card {
@@ -2368,7 +2368,7 @@ body {
   color: white;
   font-weight: 600;
   font-size: 13px;
-  transition: width 0.5s ease;
+  transition: width 0.8s ease-in-out;
 }
 
 .support-rate-b {
@@ -2379,7 +2379,7 @@ body {
   color: white;
   font-weight: 600;
   font-size: 13px;
-  transition: width 0.5s ease;
+  transition: width 0.8s ease-in-out;
 }
 
 .support-rate-labels {

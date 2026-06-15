@@ -52,6 +52,15 @@ export default function QuestionDetail() {
     }
   }, [id, user])
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadQuestion()
+      loadStatistics()
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [id])
+
   const loadStatistics = async () => {
     setStatisticsLoading(true)
     try {
