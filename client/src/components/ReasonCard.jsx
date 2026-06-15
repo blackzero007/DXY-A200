@@ -4,6 +4,36 @@ import { likeReason, dislikeReason, getReplies, replyReason, likeReply, dislikeR
 import ReportModal from './ReportModal'
 import { useAuth } from '../contexts/AuthContext'
 
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch (err) {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      return true
+    } catch (e) {
+      return false
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  }
+}
+
+function CopyToast({ visible }) {
+  return (
+    <div className={`copy-toast ${visible ? 'visible' : ''}`}>
+      <span>✓</span> 已复制
+    </div>
+  )
+}
+
 function formatTime(timestamp) {
   const now = Date.now()
   const diff = now - timestamp
@@ -30,9 +60,18 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
   const [submitting, setSubmitting] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [nestedExpanded, setNestedExpanded] = useState(false)
+  const [showCopyToast, setShowCopyToast] = useState(false)
 
   const COLLAPSE_THRESHOLD = 5
   const VISIBLE_WHEN_COLLAPSED = 2
+
+  const handleCopy = async () => {
+    const success = await copyToClipboard(reply.content)
+    if (success) {
+      setShowCopyToast(true)
+      setTimeout(() => setShowCopyToast(false), 1500)
+    }
+  }
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return
@@ -70,14 +109,20 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
 
   return (
     <div className="reply-item">
-      <div className="reply-content">
-        <span 
-          className="user-nickname-link"
-          onClick={(e) => handleUserClick(e, reply.author_name)}
-        >
-          @{reply.author_name}
-        </span>
-        {' '}{reply.content}
+      <div className="reply-content-wrapper">
+        <div className="reply-content">
+          <span 
+            className="user-nickname-link"
+            onClick={(e) => handleUserClick(e, reply.author_name)}
+          >
+            @{reply.author_name}
+          </span>
+          {' '}{reply.content}
+        </div>
+        <button className="copy-btn" onClick={handleCopy} title="复制内容">
+          📋
+        </button>
+        <CopyToast visible={showCopyToast} />
       </div>
       <div className="reply-footer">
         <span>{formatTime(reply.created_at)}</span>
@@ -191,6 +236,15 @@ export default function ReasonCard({ reason, side, onUpdate }) {
   const [submitting, setSubmitting] = useState(false)
   const [loadingReplies, setLoadingReplies] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [showCopyToast, setShowCopyToast] = useState(false)
+
+  const handleCopy = async () => {
+    const success = await copyToClipboard(reason.content)
+    if (success) {
+      setShowCopyToast(true)
+      setTimeout(() => setShowCopyToast(false), 1500)
+    }
+  }
 
   const handleUserClick = (e, nickname) => {
     e.stopPropagation()
@@ -350,14 +404,20 @@ export default function ReasonCard({ reason, side, onUpdate }) {
 
   return (
     <div className={`reason-card side-${side.toLowerCase()}`}>
-      <div className="reason-content">
-        {reason.changed_vote && (
-          <span className="changed-vote-badge">已改票</span>
-        )}
-        {reason.changed_from && (
-          <span className="changed-from-badge">改票自{reason.changed_from}方</span>
-        )}
-        {reason.content}
+      <div className="reason-content-wrapper">
+        <div className="reason-content">
+          {reason.changed_vote && (
+            <span className="changed-vote-badge">已改票</span>
+          )}
+          {reason.changed_from && (
+            <span className="changed-from-badge">改票自{reason.changed_from}方</span>
+          )}
+          {reason.content}
+        </div>
+        <button className="copy-btn" onClick={handleCopy} title="复制内容">
+          📋
+        </button>
+        <CopyToast visible={showCopyToast} />
       </div>
       <div className="reason-footer">
         <div className="author-info">
