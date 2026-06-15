@@ -19,6 +19,27 @@ export default function QuestionDetail() {
   const [favoriteLoading, setFavoriteLoading] = useState(false)
   const [statistics, setStatistics] = useState(null)
   const [statisticsLoading, setStatisticsLoading] = useState(true)
+  const [sortByA, setSortByA] = useState('netLikes')
+  const [sortByB, setSortByB] = useState('netLikes')
+
+  const SORT_OPTIONS = [
+    { key: 'netLikes', label: '默认（净赞数）' },
+    { key: 'newest', label: '最新发表' },
+    { key: 'mostReplies', label: '最多回复' },
+  ]
+
+  const sortReasons = (reasons, sortBy) => {
+    const sorted = [...reasons]
+    switch (sortBy) {
+      case 'newest':
+        return sorted.sort((a, b) => b.created_at - a.created_at)
+      case 'mostReplies':
+        return sorted.sort((a, b) => b.reply_count - a.reply_count)
+      case 'netLikes':
+      default:
+        return sorted.sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
+    }
+  }
 
   useEffect(() => {
     loadQuestion()
@@ -222,12 +243,23 @@ export default function QuestionDetail() {
             <div className="vote-count">{question.votes_a}</div>
             <div>{question.option_a}</div>
           </div>
+          <div className="sort-bar">
+            {SORT_OPTIONS.map(opt => (
+              <button
+                key={opt.key}
+                className={`sort-btn ${sortByA === opt.key ? 'active' : ''}`}
+                onClick={() => setSortByA(opt.key)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           {question.reasons.A.length === 0 ? (
             <div className="card empty-state" style={{ padding: '20px' }}>
               <p>暂无理由</p>
             </div>
           ) : (
-            question.reasons.A.map(reason => (
+            sortReasons(question.reasons.A, sortByA).map(reason => (
               <ReasonCard 
                 key={reason.id} 
                 reason={reason} 
@@ -245,12 +277,23 @@ export default function QuestionDetail() {
             <div className="vote-count">{question.votes_b}</div>
             <div>{question.option_b}</div>
           </div>
+          <div className="sort-bar">
+            {SORT_OPTIONS.map(opt => (
+              <button
+                key={opt.key}
+                className={`sort-btn ${sortByB === opt.key ? 'active' : ''}`}
+                onClick={() => setSortByB(opt.key)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           {question.reasons.B.length === 0 ? (
             <div className="card empty-state" style={{ padding: '20px' }}>
               <p>暂无理由</p>
             </div>
           ) : (
-            question.reasons.B.map(reason => (
+            sortReasons(question.reasons.B, sortByB).map(reason => (
               <ReasonCard 
                 key={reason.id} 
                 reason={reason} 

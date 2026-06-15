@@ -702,6 +702,36 @@ body {
   margin-bottom: 4px;
 }
 
+.sort-bar {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+
+.sort-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sort-btn:hover {
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.sort-btn.active {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
 .top-reasons-section {
   margin: 30px 0;
 }
