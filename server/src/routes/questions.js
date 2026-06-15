@@ -201,6 +201,30 @@ router.post('/', authMiddleware, (req, res) => {
   });
 });
 
+router.get('/:id/my-vote', authMiddleware, (req, res) => {
+  const { id } = req.params;
+  const db = readDB();
+
+  const question = db.questions.find(q => q.id === id);
+  if (!question) {
+    return res.status(404).json({ error: '问题不存在' });
+  }
+
+  const myReason = db.reasons.find(r =>
+    r.question_id === id && r.user_id === req.user.id && !r.changed_vote
+  );
+
+  if (!myReason) {
+    return res.json({ voted: false });
+  }
+
+  res.json({
+    voted: true,
+    side: myReason.side,
+    reason: myReason
+  });
+});
+
 router.post('/:id/vote', authMiddleware, (req, res) => {
   const { id } = req.params;
   const { side, content } = req.body;
@@ -220,39 +244,91 @@ router.post('/:id/vote', authMiddleware, (req, res) => {
     return res.status(404).json({ error: '问题不存在' });
   }
 
-  const reasonId = uuidv4();
-  const now = Date.now();
+  const existingReason = db.reasons.find(r =>
+    r.question_id === id && r.user_id === req.user.id && !r.changed_vote
+  );
 
-  const newReason = {
-    id: reasonId,
-    question_id: id,
-    side,
-    content: content.trim(),
-    author_name: req.user.nickname,
-    user_id: req.user.id,
-    created_at: now,
-    likes: 0,
-    dislikes: 0,
-    reply_count: 0
-  };
-
-  db.reasons.unshift(newReason);
-
-  if (side === 'A') {
-    question.votes_a += 1;
-  } else {
-    question.votes_b += 1;
-  }
-
-  writeDB(db);
-
-  res.status(201).json({
-    reason: newReason,
-    question: {
-      ...question,
-      total_votes: question.votes_a + question.votes_b
+  if (existingReason) {
+    if (existingReason.side === side) {
+      return res.status(400).json({ error: '你已经投过这一方了，不能重复投票' });
     }
-  });
+
+    existingReason.changed_vote = true;
+    if (existingReason.side === 'A') {
+      question.votes_a = Math.max(0, question.votes_a - 1);
+    } else {
+      question.votes_b = Math.max(0, question.votes_b - 1);
+    }
+
+    const reasonId = uuidv4();
+    const now = Date.now();
+    const newReason = {
+      id: reasonId,
+      question_id: id,
+      side,
+      content: content.trim(),
+      author_name: req.user.nickname,
+      user_id: req.user.id,
+      created_at: now,
+      likes: 0,
+      dislikes: 0,
+      reply_count: 0,
+      changed_from: existingReason.side
+    };
+
+    db.reasons.unshift(newReason);
+
+    if (side === 'A') {
+      question.votes_a += 1;
+    } else {
+      question.votes_b += 1;
+    }
+
+    writeDB(db);
+
+    res.status(201).json({
+      reason: newReason,
+      changed_from_reason: existingReason,
+      question: {
+        ...question,
+        total_votes: question.votes_a + question.votes_b
+      }
+    });
+  } else {
+    const reasonId = uuidv4();
+    const now = Date.now();
+
+    const newReason = {
+      id: reasonId,
+      question_id: id,
+      side,
+      content: content.trim(),
+      author_name: req.user.nickname,
+      user_id: req.user.id,
+      created_at: now,
+      likes: 0,
+      dislikes: 0,
+      reply_count: 0
+    };
+
+    db.reasons.unshift(newReason);
+
+    if (side === 'A') {
+      question.votes_a += 1;
+    } else {
+      question.votes_b += 1;
+    }
+
+    writeDB(db);
+
+    res.status(201).json({
+      reason: newReason,
+      question: {
+        ...question,
+        total_votes: question.votes_a + question.votes_b
+      }
+    });
+  }
 });
 
 module.exports = router;

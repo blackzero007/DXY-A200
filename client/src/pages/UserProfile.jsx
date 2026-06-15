@@ -302,7 +302,15 @@ export default function UserProfile() {
                 <div className="reason-option-tag">
                   支持：{reason.question_option}
                 </div>
-                <div className="reason-content">{reason.content}</div>
+                <div className="reason-content">
+                  {reason.changed_vote && (
+                    <span className="changed-vote-badge">已改票</span>
+                  )}
+                  {reason.changed_from && (
+                    <span className="changed-from-badge">改票自{reason.changed_from}方</span>
+                  )}
+                  {reason.content}
+                </div>
                 <div className="reason-footer">
                   <span>{formatTime(reason.created_at)}</span>
                   <div className="reason-actions">

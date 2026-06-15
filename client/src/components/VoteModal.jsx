@@ -4,13 +4,15 @@ import { voteQuestion } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 import { getDraftByTypeAndKey, saveDraft, deleteDraftByTypeAndKey, formatDraftTime } from '../utils/draft'
 
-export default function VoteModal({ question, onClose, onSuccess, initialDraft }) {
+export default function VoteModal({ question, myVote, onClose, onSuccess, initialDraft }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const DRAFT_TYPE = 'vote'
   const DRAFT_KEY = question?.id?.toString() || 'current'
 
-  const [side, setSide] = useState(null)
+  const isChangeVote = !!(myVote && myVote.voted)
+
+  const [side, setSide] = useState(isChangeVote ? (myVote.side === 'A' ? 'B' : 'A') : null)
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -36,7 +38,11 @@ export default function VoteModal({ question, onClose, onSuccess, initialDraft }
   const restoreDraft = () => {
     const draft = getDraftByTypeAndKey(DRAFT_TYPE, DRAFT_KEY)
     if (draft) {
-      setSide(draft.data.side || null)
+      if (isChangeVote && draft.data.side === myVote.side) {
+        setSide(myVote.side === 'A' ? 'B' : 'A')
+      } else {
+        setSide(draft.data.side || null)
+      }
       setContent(draft.data.content || '')
       setLastSavedAt(draft.updated_at)
       formChangedRef.current = true
@@ -90,6 +96,13 @@ export default function VoteModal({ question, onClose, onSuccess, initialDraft }
     }
   }, [])
 
+  const handleSideClick = (clickedSide) => {
+    if (isChangeVote && clickedSide === myVote.side) {
+      return
+    }
+    setSide(clickedSide)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -132,7 +145,36 @@ export default function VoteModal({ question, onClose, onSuccess, initialDraft }
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal vote-modal" onClick={e => e.stopPropagation()}>
-        <h2>说出你的选择</h2>
+        <h2>{isChangeVote ? '改票 - 重新选择' : '说出你的选择'}</h2>
+
+        {isChangeVote && (
+          <div style={{
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 16,
+            fontSize: 13,
+            color: '#92400e'
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+              🔄 你当前支持{myVote.side === 'A' ? 'A方' : 'B方'}：
+            </div>
+            <div style={{ 
+              background: '#fefce8', 
+              padding: '8px 10px', 
+              borderRadius: 6,
+              color: '#78350f',
+              fontSize: 13,
+              lineHeight: 1.5
+            }}>
+              {myVote.reason.content}
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: '#b45309' }}>
+              改票后，原理由将保留并标记为「已改票」，票数将自动更新
+            </div>
+          </div>
+        )}
 
         {showRestoreTip && (
           <div style={{
@@ -197,18 +239,50 @@ export default function VoteModal({ question, onClose, onSuccess, initialDraft }
         <form onSubmit={handleSubmit}>
           <div className="vote-options">
             <div 
-              className={`vote-option-card side-a ${side === 'A' ? 'selected' : ''}`}
-              onClick={() => setSide('A')}
+              className={`vote-option-card side-a ${side === 'A' ? 'selected' : ''} ${isChangeVote && myVote.side === 'A' ? 'disabled-option' : ''}`}
+              onClick={() => handleSideClick('A')}
+              style={isChangeVote && myVote.side === 'A' ? { opacity: 0.5, cursor: 'not-allowed', position: 'relative' } : {}}
             >
+              {isChangeVote && myVote.side === 'A' && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: 8, 
+                  right: 8, 
+                  fontSize: 10, 
+                  background: '#fbbf24', 
+                  color: '#78350f',
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  fontWeight: 600
+                }}>
+                  当前
+                </div>
+              )}
               <div style={{ fontSize: 24, marginBottom: 8 }}>👍</div>
               <div style={{ fontWeight: 'bold', color: '#be185d' }}>
                 {question.option_a}
               </div>
             </div>
             <div 
-              className={`vote-option-card side-b ${side === 'B' ? 'selected' : ''}`}
-              onClick={() => setSide('B')}
+              className={`vote-option-card side-b ${side === 'B' ? 'selected' : ''} ${isChangeVote && myVote.side === 'B' ? 'disabled-option' : ''}`}
+              onClick={() => handleSideClick('B')}
+              style={isChangeVote && myVote.side === 'B' ? { opacity: 0.5, cursor: 'not-allowed', position: 'relative' } : {}}
             >
+              {isChangeVote && myVote.side === 'B' && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: 8, 
+                  right: 8, 
+                  fontSize: 10, 
+                  background: '#fbbf24', 
+                  color: '#78350f',
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  fontWeight: 600
+                }}>
+                  当前
+                </div>
+              )}
               <div style={{ fontSize: 24, marginBottom: 8 }}>👍</div>
               <div style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
                 {question.option_b}
@@ -217,9 +291,9 @@ export default function VoteModal({ question, onClose, onSuccess, initialDraft }
           </div>
 
           <div className="form-group">
-            <label>你的理由 *</label>
+            <label>{isChangeVote ? '改票理由 *' : '你的理由 *'}</label>
             <textarea
-              placeholder="写下你选择的理由，哪怕一句话也行..."
+              placeholder={isChangeVote ? '写下你改变选择的理由...' : '写下你选择的理由，哪怕一句话也行...'}
               value={content}
               onChange={e => setContent(e.target.value)}
               maxLength={500}
@@ -256,7 +330,7 @@ export default function VoteModal({ question, onClose, onSuccess, initialDraft }
               className="btn btn-primary"
               disabled={submitting}
             >
-              {submitting ? '提交中...' : '提交投票'}
+              {submitting ? '提交中...' : isChangeVote ? '确认改票' : '提交投票'}
             </button>
           </div>
         </form>

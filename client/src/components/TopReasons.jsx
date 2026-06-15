@@ -43,6 +43,12 @@ export default function TopReasons({ topA, topB, optionA, optionB }) {
             </div>
             <div style={{ flex: 1 }}>
               <div className="reason-content" style={{ marginBottom: 8 }}>
+                {reason.changed_vote && (
+                  <span className="changed-vote-badge">已改票</span>
+                )}
+                {reason.changed_from && (
+                  <span className="changed-from-badge">改票自{reason.changed_from}方</span>
+                )}
                 {reason.content}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#9ca3af' }}>

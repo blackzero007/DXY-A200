@@ -57,6 +57,10 @@ export const voteQuestion = (id, data) => {
   return api.post(`/questions/${id}/vote`, data).then(res => res.data);
 };
 
+export const checkMyVote = (id) => {
+  return api.get(`/questions/${id}/my-vote`).then(res => res.data);
+};
+
 export const likeReason = (id) => {
   return api.post(`/reasons/${id}/like`).then(res => res.data);
 };

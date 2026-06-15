@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getQuestion, getTopReasons, checkFavorite, addFavorite, removeFavorite, getQuestionStatistics } from '../utils/api'
+import { getQuestion, getTopReasons, checkFavorite, addFavorite, removeFavorite, getQuestionStatistics, checkMyVote } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 import ReasonCard from '../components/ReasonCard.jsx'
 import VoteModal from '../components/VoteModal.jsx'
@@ -21,6 +21,7 @@ export default function QuestionDetail() {
   const [statisticsLoading, setStatisticsLoading] = useState(true)
   const [sortByA, setSortByA] = useState('netLikes')
   const [sortByB, setSortByB] = useState('netLikes')
+  const [myVote, setMyVote] = useState(null)
 
   const SORT_OPTIONS = [
     { key: 'netLikes', label: '默认（净赞数）' },
@@ -47,6 +48,7 @@ export default function QuestionDetail() {
     loadStatistics()
     if (user) {
       loadFavoriteStatus()
+      loadMyVote()
     }
   }, [id, user])
 
@@ -59,6 +61,20 @@ export default function QuestionDetail() {
       console.error('加载统计数据失败:', err)
     } finally {
       setStatisticsLoading(false)
+    }
+  }
+
+  const loadMyVote = async () => {
+    try {
+      const data = await checkMyVote(id)
+      if (data.voted) {
+        setMyVote(data)
+      } else {
+        setMyVote(null)
+      }
+    } catch (err) {
+      console.error('检查投票状态失败:', err)
+      setMyVote(null)
     }
   }
 
@@ -115,19 +131,30 @@ export default function QuestionDetail() {
 
   const handleVoteSuccess = (result) => {
     setShowVoteModal(false)
-    setQuestion(prev => ({
-      ...prev,
-      votes_a: result.question.votes_a,
-      votes_b: result.question.votes_b,
-      total_votes: result.question.total_votes,
-      reasons: {
-        ...prev.reasons,
-        [result.reason.side]: [result.reason, ...prev.reasons[result.reason.side]]
-          .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
+    setQuestion(prev => {
+      const newReasons = { ...prev.reasons }
+
+      if (result.changed_from_reason) {
+        const oldSide = result.changed_from_reason.side
+        newReasons[oldSide] = newReasons[oldSide].map(r =>
+          r.id === result.changed_from_reason.id ? result.changed_from_reason : r
+        ).sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
       }
-    }))
+
+      newReasons[result.reason.side] = [result.reason, ...newReasons[result.reason.side]]
+        .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes) || b.likes - a.likes || b.created_at - a.created_at)
+
+      return {
+        ...prev,
+        votes_a: result.question.votes_a,
+        votes_b: result.question.votes_b,
+        total_votes: result.question.total_votes,
+        reasons: newReasons
+      }
+    })
     loadTopReasons()
     loadStatistics()
+    loadMyVote()
   }
 
   const handleReasonUpdate = (updatedReason, side) => {
@@ -223,7 +250,7 @@ export default function QuestionDetail() {
             style={{ fontSize: 16, padding: '14px 40px' }}
             onClick={() => setShowVoteModal(true)}
           >
-            我要投票（必须写理由）
+            {myVote ? '我要改票（换边站）' : '我要投票（必须写理由）'}
           </button>
         </div>
       </div>
@@ -308,6 +335,7 @@ export default function QuestionDetail() {
       {showVoteModal && (
         <VoteModal 
           question={question}
+          myVote={myVote}
           onClose={() => setShowVoteModal(false)}
           onSuccess={handleVoteSuccess}
         />

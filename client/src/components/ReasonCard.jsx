@@ -330,7 +330,15 @@ export default function ReasonCard({ reason, side, onUpdate }) {
 
   return (
     <div className={`reason-card side-${side.toLowerCase()}`}>
-      <div className="reason-content">{reason.content}</div>
+      <div className="reason-content">
+        {reason.changed_vote && (
+          <span className="changed-vote-badge">已改票</span>
+        )}
+        {reason.changed_from && (
+          <span className="changed-from-badge">改票自{reason.changed_from}方</span>
+        )}
+        {reason.content}
+      </div>
       <div className="reason-footer">
         <div className="author-info">
           <div 
