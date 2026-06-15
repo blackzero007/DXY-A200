@@ -374,8 +374,12 @@ router.post('/follow/:nickname', authMiddleware, (req, res) => {
     return res.status(400).json({ error: '不能关注自己' });
   }
 
-  const targetUser = db.users.find(u => u.nickname === nickname);
-  if (!targetUser) {
+  const registeredUser = db.users.find(u => u.nickname === nickname);
+  const userQuestions = db.questions.filter(q => q.author_name === nickname);
+  const userReasons = db.reasons.filter(r => r.author_name === nickname);
+  const userReplies = db.replies.filter(r => r.author_name === nickname);
+
+  if (!registeredUser && userQuestions.length === 0 && userReasons.length === 0 && userReplies.length === 0) {
     return res.status(404).json({ error: '用户不存在' });
   }
 
@@ -444,7 +448,7 @@ router.get('/following', authMiddleware, (req, res) => {
       const followedUser = db.users.find(u => u.nickname === f.following_nickname);
       return {
         nickname: f.following_nickname,
-        avatar: followedUser ? followedUser.avatar : null,
+        avatar: followedUser ? followedUser.avatar : generateAvatar(f.following_nickname),
         followed_at: f.created_at
       };
     });
