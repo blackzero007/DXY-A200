@@ -505,6 +505,25 @@ body {
   font-weight: bold;
 }
 
+.expand-replies-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  margin-top: 4px;
+  border: none;
+  background: none;
+  color: #6366f1;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.expand-replies-btn:hover {
+  background: #f0f0ff;
+}
+
 .reply-list {
   margin-top: 12px;
   padding-left: 20px;

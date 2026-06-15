@@ -29,6 +29,10 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
   const [replyContent, setReplyContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [nestedExpanded, setNestedExpanded] = useState(false)
+
+  const COLLAPSE_THRESHOLD = 5
+  const VISIBLE_WHEN_COLLAPSED = 2
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return
@@ -139,7 +143,7 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
 
       {reply.replies && reply.replies.length > 0 && (
         <div className="reply-list">
-          {reply.replies.map(child => (
+          {(nestedExpanded ? reply.replies : reply.replies.slice(0, VISIBLE_WHEN_COLLAPSED)).map(child => (
             <ReplyItem
               key={child.id}
               reply={child}
@@ -148,6 +152,22 @@ function ReplyItem({ reply, onLike, onDislike, onReply }) {
               onReply={onReply}
             />
           ))}
+          {!nestedExpanded && reply.replies.length > COLLAPSE_THRESHOLD && (
+            <button
+              className="expand-replies-btn"
+              onClick={() => setNestedExpanded(true)}
+            >
+              展开剩余{reply.replies.length - VISIBLE_WHEN_COLLAPSED}条回复
+            </button>
+          )}
+          {nestedExpanded && reply.replies.length > COLLAPSE_THRESHOLD && (
+            <button
+              className="expand-replies-btn"
+              onClick={() => setNestedExpanded(false)}
+            >
+              收起回复
+            </button>
+          )}
         </div>
       )}
 
