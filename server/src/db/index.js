@@ -16,7 +16,7 @@ const CATEGORIES = ['职场', '情感', '消费', '学业', '科技'];
 function readDB() {
   ensureDataDir();
   if (!fs.existsSync(dbPath)) {
-    return { questions: [], reasons: [], replies: [], users: [], sessions: [], favorites: [], reports: [], notifications: [] };
+    return { questions: [], reasons: [], replies: [], users: [], sessions: [], favorites: [], reports: [], notifications: [], follows: [] };
   }
   try {
     const data = fs.readFileSync(dbPath, 'utf-8');
@@ -29,6 +29,7 @@ function readDB() {
     if (!db.favorites) db.favorites = [];
     if (!db.reports) db.reports = [];
     if (!db.notifications) db.notifications = [];
+  if (!db.follows) db.follows = [];
 
     let needSave = false;
     db.questions.forEach(q => {

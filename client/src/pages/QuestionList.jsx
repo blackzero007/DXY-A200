@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getQuestions, CATEGORIES, getFavorites, removeFavorite } from '../utils/api'
+import { getQuestions, CATEGORIES, getFavorites, removeFavorite, getFollowFeed } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 import CreateQuestionModal from '../components/CreateQuestionModal.jsx'
 
@@ -110,6 +110,10 @@ export default function QuestionList() {
   const [favoritesTotal, setFavoritesTotal] = useState(0)
   const [favoritesLoading, setFavoritesLoading] = useState(false)
   const [removingFavoriteId, setRemovingFavoriteId] = useState(null)
+  const [followFeed, setFollowFeed] = useState([])
+  const [followFeedPage, setFollowFeedPage] = useState(1)
+  const [followFeedTotal, setFollowFeedTotal] = useState(0)
+  const [followFeedLoading, setFollowFeedLoading] = useState(false)
 
   useEffect(() => {
     const params = {}
@@ -124,8 +128,10 @@ export default function QuestionList() {
       loadQuestions()
     } else if (activeTab === 'favorites' && user) {
       loadFavorites()
+    } else if (activeTab === 'following' && user) {
+      loadFollowFeed()
     }
-  }, [sort, category, keyword, page, activeTab, user, favoritesPage])
+  }, [sort, category, keyword, page, activeTab, user, favoritesPage, followFeedPage])
 
   const loadQuestions = async () => {
     setLoading(true)
@@ -159,6 +165,24 @@ export default function QuestionList() {
       console.error('加载收藏失败:', err)
     } finally {
       setFavoritesLoading(false)
+    }
+  }
+
+  const loadFollowFeed = async () => {
+    if (!user) return
+    setFollowFeedLoading(true)
+    try {
+      const data = await getFollowFeed({ page: followFeedPage, limit: 10 })
+      if (followFeedPage === 1) {
+        setFollowFeed(data.list)
+      } else {
+        setFollowFeed(prev => [...prev, ...data.list])
+      }
+      setFollowFeedTotal(data.total)
+    } catch (err) {
+      console.error('加载关注动态失败:', err)
+    } finally {
+      setFollowFeedLoading(false)
     }
   }
 
@@ -265,6 +289,12 @@ export default function QuestionList() {
           全部问题
         </div>
         <div 
+          className={`tab ${activeTab === 'following' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('following'); setFollowFeedPage(1); }}
+        >
+          👥 关注动态
+        </div>
+        <div 
           className={`tab ${activeTab === 'favorites' ? 'active' : ''}`}
           onClick={() => { setActiveTab('favorites'); setFavoritesPage(1); }}
         >
@@ -313,6 +343,100 @@ export default function QuestionList() {
                 className="btn btn-outline" 
                 style={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
                 onClick={() => setPage(p => p + 1)}
+              >
+                加载更多
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'following' && (
+        <>
+          {!user ? (
+            <div className="card empty-state">
+              <h3>请先登录</h3>
+              <p>登录后即可查看关注用户的动态</p>
+              <button 
+                className="btn btn-primary"
+                style={{ marginTop: 16 }}
+                onClick={() => navigate('/login')}
+              >
+                去登录
+              </button>
+            </div>
+          ) : followFeedLoading ? (
+            <div className="card loading">加载中...</div>
+          ) : followFeed.length === 0 ? (
+            <div className="card empty-state">
+              <h3>暂无关注动态</h3>
+              <p>关注其他用户后，他们的最新问题和投票动态将显示在这里</p>
+            </div>
+          ) : (
+            followFeed.map(activity => (
+              <div 
+                key={`${activity.type}-${activity.id}`}
+                className="card follow-feed-item"
+                onClick={() => navigate(activity.type === 'question' ? `/question/${activity.id}` : `/question/${activity.question_id}`)}
+              >
+                <div className="feed-type-badge">
+                  {activity.type === 'question' ? '📝 发布了问题' : '🗳️ 参与了投票'}
+                </div>
+                <div className="feed-author">
+                  <span 
+                    className="user-nickname-link"
+                    onClick={(e) => handleUserClick(e, activity.author_name, navigate)}
+                  >
+                    @{activity.author_name}
+                  </span>
+                </div>
+                {activity.type === 'question' ? (
+                  <>
+                    <h3>{activity.title}</h3>
+                    {activity.description && (
+                      <p className="question-description">{activity.description}</p>
+                    )}
+                    <div className="question-options">
+                      <div className="option-tag side-a">{activity.option_a}</div>
+                      <div className="option-tag side-b">{activity.option_b}</div>
+                    </div>
+                    <div className="vote-bar-container">
+                      <div className="vote-bar-a" style={{ width: `${activity.total_votes > 0 ? (activity.votes_a / activity.total_votes) * 100 : 50}%` }}></div>
+                      <div className="vote-bar-b" style={{ width: `${activity.total_votes > 0 ? (activity.votes_b / activity.total_votes) * 100 : 50}%` }}></div>
+                    </div>
+                    <div className="question-meta">
+                      <span>{activity.total_votes} 人投票</span>
+                      <span>{formatTime(activity.created_at)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="feed-vote-question-title">
+                      {activity.question_title}
+                    </div>
+                    <div className={`feed-vote-side side-${activity.side.toLowerCase()}`}>
+                      选择了：{activity.option_label}
+                    </div>
+                    <div className="feed-vote-reason">{activity.content}</div>
+                    <div className="question-meta">
+                      <div className="feed-vote-stats">
+                        <span>👍 {activity.likes}</span>
+                        <span>💬 {activity.reply_count}</span>
+                      </div>
+                      <span>{formatTime(activity.created_at)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))
+          )}
+
+          {user && followFeedTotal > followFeed.length && (
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
+                onClick={() => setFollowFeedPage(p => p + 1)}
               >
                 加载更多
               </button>

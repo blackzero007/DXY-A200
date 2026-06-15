@@ -173,4 +173,24 @@ export const clearAllNotifications = () => {
   return api.delete('/notifications').then(res => res.data);
 };
 
+export const followUser = (nickname) => {
+  return api.post(`/users/follow/${encodeURIComponent(nickname)}`).then(res => res.data);
+};
+
+export const unfollowUser = (nickname) => {
+  return api.delete(`/users/follow/${encodeURIComponent(nickname)}`).then(res => res.data);
+};
+
+export const checkFollowStatus = (nickname) => {
+  return api.get(`/users/follow/status/${encodeURIComponent(nickname)}`).then(res => res.data);
+};
+
+export const getFollowing = () => {
+  return api.get('/users/following').then(res => res.data);
+};
+
+export const getFollowFeed = (params = {}) => {
+  return api.get('/users/follow/feed', { params }).then(res => res.data);
+};
+
 export default api;

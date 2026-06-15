@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getUserProfile, getUserQuestions, getUserReasons, getUserReplies } from '../utils/api'
+import { getUserProfile, getUserQuestions, getUserReasons, getUserReplies, checkFollowStatus, followUser, unfollowUser } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
 
 function formatTime(timestamp) {
   const now = Date.now()
@@ -34,6 +35,7 @@ const TABS = [
 export default function UserProfile() {
   const { nickname } = useParams()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
   const decodedNickname = decodeURIComponent(nickname || '')
   const [profile, setProfile] = useState(null)
   const [activeTab, setActiveTab] = useState('questions')
@@ -43,10 +45,22 @@ export default function UserProfile() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [error, setError] = useState(null)
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
 
   useEffect(() => {
     loadProfile()
   }, [decodedNickname])
+
+  useEffect(() => {
+    if (currentUser && decodedNickname !== currentUser.nickname) {
+      checkFollowStatus(decodedNickname)
+        .then(data => setIsFollowing(data.is_following))
+        .catch(() => {})
+    } else {
+      setIsFollowing(false)
+    }
+  }, [decodedNickname, currentUser])
 
   useEffect(() => {
     loadListData()
@@ -99,6 +113,27 @@ export default function UserProfile() {
     setPage(p => p + 1)
   }
 
+  const handleToggleFollow = async () => {
+    if (!currentUser) {
+      navigate('/login')
+      return
+    }
+    setFollowLoading(true)
+    try {
+      if (isFollowing) {
+        await unfollowUser(decodedNickname)
+        setIsFollowing(false)
+      } else {
+        await followUser(decodedNickname)
+        setIsFollowing(true)
+      }
+    } catch (err) {
+      console.error('关注操作失败:', err)
+    } finally {
+      setFollowLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -142,7 +177,26 @@ export default function UserProfile() {
             {user.avatar?.initial || getAvatar(user.nickname)}
           </div>
           <div className="profile-info">
-            <h2 className="profile-nickname">@{user.nickname}</h2>
+            <div className="profile-name-row">
+              <h2 className="profile-nickname">@{user.nickname}</h2>
+              {currentUser && currentUser.nickname !== user.nickname && (
+                <button
+                  className={`btn follow-btn ${isFollowing ? 'following' : ''}`}
+                  onClick={handleToggleFollow}
+                  disabled={followLoading}
+                >
+                  {isFollowing ? '已关注' : '+ 关注'}
+                </button>
+              )}
+              {!currentUser && (
+                <button
+                  className="btn follow-btn"
+                  onClick={() => navigate('/login')}
+                >
+                  + 关注
+                </button>
+              )}
+            </div>
             {user.is_registered ? (
               <p className="profile-register-date">
                 注册于 {formatRegisterDate(user.created_at)}

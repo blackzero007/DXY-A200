@@ -364,4 +364,159 @@ router.get('/favorites/check/:questionId', authMiddleware, (req, res) => {
   res.json({ is_favorited: isFavorited });
 });
 
+router.post('/follow/:nickname', authMiddleware, (req, res) => {
+  const { nickname } = req.params;
+  const db = readDB();
+  const userId = req.user.id;
+  const userNickname = req.user.nickname;
+
+  if (nickname === userNickname) {
+    return res.status(400).json({ error: '不能关注自己' });
+  }
+
+  const targetUser = db.users.find(u => u.nickname === nickname);
+  if (!targetUser) {
+    return res.status(404).json({ error: '用户不存在' });
+  }
+
+  const existingFollow = db.follows.find(
+    f => f.follower_id === userId && f.following_nickname === nickname
+  );
+  if (existingFollow) {
+    return res.status(400).json({ error: '已经关注了该用户' });
+  }
+
+  const newFollow = {
+    id: uuidv4(),
+    follower_id: userId,
+    following_nickname: nickname,
+    created_at: Date.now()
+  };
+
+  db.follows.push(newFollow);
+  writeDB(db);
+
+  res.status(201).json({
+    message: '关注成功',
+    follow: newFollow
+  });
+});
+
+router.delete('/follow/:nickname', authMiddleware, (req, res) => {
+  const { nickname } = req.params;
+  const db = readDB();
+  const userId = req.user.id;
+
+  const followIndex = db.follows.findIndex(
+    f => f.follower_id === userId && f.following_nickname === nickname
+  );
+
+  if (followIndex === -1) {
+    return res.status(404).json({ error: '未关注该用户' });
+  }
+
+  db.follows.splice(followIndex, 1);
+  writeDB(db);
+
+  res.json({ message: '取消关注成功' });
+});
+
+router.get('/follow/status/:nickname', authMiddleware, (req, res) => {
+  const { nickname } = req.params;
+  const db = readDB();
+  const userId = req.user.id;
+
+  const isFollowing = db.follows.some(
+    f => f.follower_id === userId && f.following_nickname === nickname
+  );
+
+  res.json({ is_following: isFollowing });
+});
+
+router.get('/following', authMiddleware, (req, res) => {
+  const db = readDB();
+  const userId = req.user.id;
+
+  const followingList = db.follows
+    .filter(f => f.follower_id === userId)
+    .sort((a, b) => b.created_at - a.created_at)
+    .map(f => {
+      const followedUser = db.users.find(u => u.nickname === f.following_nickname);
+      return {
+        nickname: f.following_nickname,
+        avatar: followedUser ? followedUser.avatar : null,
+        followed_at: f.created_at
+      };
+    });
+
+  res.json({ list: followingList });
+});
+
+router.get('/follow/feed', authMiddleware, (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const db = readDB();
+  const userId = req.user.id;
+
+  const followingNicknames = db.follows
+    .filter(f => f.follower_id === userId)
+    .map(f => f.following_nickname);
+
+  if (followingNicknames.length === 0) {
+    return res.json({ list: [], total: 0, page: Number(page), limit: Number(limit) });
+  }
+
+  const activities = [];
+
+  const questions = db.questions
+    .filter(q => followingNicknames.includes(q.author_name))
+    .map(q => ({
+      type: 'question',
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      option_a: q.option_a,
+      option_b: q.option_b,
+      votes_a: q.votes_a,
+      votes_b: q.votes_b,
+      total_votes: q.votes_a + q.votes_b,
+      category: q.category,
+      author_name: q.author_name,
+      created_at: q.created_at
+    }));
+  activities.push(...questions);
+
+  const reasons = db.reasons
+    .filter(r => followingNicknames.includes(r.author_name))
+    .map(r => {
+      const question = db.questions.find(q => q.id === r.question_id);
+      return {
+        type: 'vote',
+        id: r.id,
+        question_id: r.question_id,
+        question_title: question ? question.title : null,
+        side: r.side,
+        content: r.content,
+        option_label: question ? (r.side === 'A' ? question.option_a : question.option_b) : null,
+        likes: r.likes,
+        reply_count: r.reply_count,
+        author_name: r.author_name,
+        created_at: r.created_at
+      };
+    });
+  activities.push(...reasons);
+
+  activities.sort((a, b) => b.created_at - a.created_at);
+
+  const start = (page - 1) * limit;
+  const end = start + Number(limit);
+  const paginated = activities.slice(start, end);
+
+  res.json({
+    list: paginated,
+    total: activities.length,
+    page: Number(page),
+    limit: Number(limit)
+  });
+});
+
 module.exports = router;
