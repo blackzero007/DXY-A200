@@ -196,7 +196,7 @@ export default function QuestionDetail() {
 
   return (
     <div className="container">
-      <button className="back-btn" onClick={() => navigate('/')}>
+      <button className="back-btn" onClick={() => navigate(-1)}>
         ← 返回列表
       </button>
 

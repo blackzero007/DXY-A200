@@ -119,27 +119,68 @@ function QuestionCard({ question, onClick, keyword, showFavorite, isFavorited, o
   )
 }
 
+const STORAGE_KEY = 'questionListState'
+
+function saveListState(state) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...state,
+      timestamp: Date.now()
+    }))
+  } catch (e) {
+    console.warn('保存列表状态失败:', e)
+  }
+}
+
+function loadListState() {
+  try {
+    const data = sessionStorage.getItem(STORAGE_KEY)
+    if (!data) return null
+    const parsed = JSON.parse(data)
+    if (Date.now() - parsed.timestamp > 1000 * 60 * 30) {
+      sessionStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return parsed
+  } catch (e) {
+    console.warn('恢复列表状态失败:', e)
+    return null
+  }
+}
+
+function clearListState() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY)
+  } catch (e) {
+    console.warn('清除列表状态失败:', e)
+  }
+}
+
 export default function QuestionList() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+
+  const savedState = loadListState()
+  const [shouldRestoreScroll, setShouldRestoreScroll] = useState(!!savedState)
+
   const [questions, setQuestions] = useState([])
   const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(true)
-  const [sort, setSort] = useState(searchParams.get('sort') || 'newest')
-  const [category, setCategory] = useState(searchParams.get('category') || '全部')
-  const [keyword, setKeyword] = useState(searchParams.get('keyword') || '')
-  const [searchInput, setSearchInput] = useState(searchParams.get('keyword') || '')
+  const [sort, setSort] = useState(savedState?.sort || searchParams.get('sort') || 'newest')
+  const [category, setCategory] = useState(savedState?.category || searchParams.get('category') || '全部')
+  const [keyword, setKeyword] = useState(savedState?.keyword || searchParams.get('keyword') || '')
+  const [searchInput, setSearchInput] = useState(savedState?.keyword || searchParams.get('keyword') || '')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(savedState?.page || 1)
   const [total, setTotal] = useState(0)
-  const [activeTab, setActiveTab] = useState('questions')
-  const [favoritesPage, setFavoritesPage] = useState(1)
+  const [activeTab, setActiveTab] = useState(savedState?.activeTab || 'questions')
+  const [favoritesPage, setFavoritesPage] = useState(savedState?.favoritesPage || 1)
   const [favoritesTotal, setFavoritesTotal] = useState(0)
   const [favoritesLoading, setFavoritesLoading] = useState(false)
   const [removingFavoriteId, setRemovingFavoriteId] = useState(null)
   const [followFeed, setFollowFeed] = useState([])
-  const [followFeedPage, setFollowFeedPage] = useState(1)
+  const [followFeedPage, setFollowFeedPage] = useState(savedState?.followFeedPage || 1)
   const [followFeedTotal, setFollowFeedTotal] = useState(0)
   const [followFeedLoading, setFollowFeedLoading] = useState(false)
 
@@ -160,6 +201,41 @@ export default function QuestionList() {
       loadFollowFeed()
     }
   }, [sort, category, keyword, page, activeTab, user, favoritesPage, followFeedPage])
+
+  useEffect(() => {
+    if (shouldRestoreScroll && !loading && savedState?.scrollY !== undefined) {
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: savedState.scrollY,
+          behavior: 'auto'
+        })
+        setShouldRestoreScroll(false)
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [loading, shouldRestoreScroll, savedState])
+
+  useEffect(() => {
+    clearListState()
+  }, [sort, category, keyword, activeTab])
+
+  const handleBeforeNavigate = () => {
+    saveListState({
+      sort,
+      category,
+      keyword,
+      page,
+      activeTab,
+      favoritesPage,
+      followFeedPage,
+      scrollY: window.scrollY
+    })
+  }
+
+  const handleQuestionClick = (questionId) => {
+    handleBeforeNavigate()
+    navigate(`/question/${questionId}`)
+  }
 
   const loadQuestions = async () => {
     setLoading(true)
@@ -360,7 +436,7 @@ export default function QuestionList() {
                 key={q.id} 
                 question={q} 
                 keyword={keyword}
-                onClick={() => navigate(`/question/${q.id}`)}
+                onClick={() => handleQuestionClick(q.id)}
               />
             ))
           )}
@@ -405,7 +481,10 @@ export default function QuestionList() {
               <div 
                 key={`${activity.type}-${activity.id}`}
                 className="card follow-feed-item"
-                onClick={() => navigate(activity.type === 'question' ? `/question/${activity.id}` : `/question/${activity.question_id}`)}
+                onClick={() => {
+                  handleBeforeNavigate()
+                  navigate(activity.type === 'question' ? `/question/${activity.id}` : `/question/${activity.question_id}`)
+                }}
               >
                 <div className="feed-type-badge">
                   {activity.type === 'question' ? '📝 发布了问题' : '🗳️ 参与了投票'}
@@ -500,7 +579,7 @@ export default function QuestionList() {
                 key={q.id} 
                 question={q} 
                 keyword={keyword}
-                onClick={() => navigate(`/question/${q.id}`)}
+                onClick={() => handleQuestionClick(q.id)}
                 showFavorite={true}
                 isFavorited={true}
                 onToggleFavorite={handleRemoveFavorite}
