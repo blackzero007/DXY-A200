@@ -291,8 +291,10 @@ export default function QuestionDetail() {
             ))}
           </div>
           {question.reasons.A.length === 0 ? (
-            <div className="card empty-state" style={{ padding: '20px' }}>
-              <p>暂无理由</p>
+            <div className="card empty-state empty-state-reasons">
+              <div className="empty-state-icon">💭</div>
+              <div className="empty-state-title" style={{ fontSize: 15 }}>还没有支持「{question.option_a}」的理由</div>
+              <div className="empty-state-desc" style={{ fontSize: 13 }}>点击上方投票按钮，成为第一个支持这一方的人！</div>
             </div>
           ) : (
             sortReasons(question.reasons.A, sortByA).map(reason => (
@@ -325,8 +327,10 @@ export default function QuestionDetail() {
             ))}
           </div>
           {question.reasons.B.length === 0 ? (
-            <div className="card empty-state" style={{ padding: '20px' }}>
-              <p>暂无理由</p>
+            <div className="card empty-state empty-state-reasons">
+              <div className="empty-state-icon">💭</div>
+              <div className="empty-state-title" style={{ fontSize: 15 }}>还没有支持「{question.option_b}」的理由</div>
+              <div className="empty-state-desc" style={{ fontSize: 13 }}>点击上方投票按钮，成为第一个支持这一方的人！</div>
             </div>
           ) : (
             sortReasons(question.reasons.B, sortByB).map(reason => (

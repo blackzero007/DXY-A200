@@ -426,9 +426,12 @@ export default function QuestionList() {
           {loading ? (
             <div className="card loading">加载中...</div>
           ) : questions.length === 0 ? (
-            <div className="card empty-state">
-              <h3>{isSearching ? '没有找到相关问题' : '还没有问题'}</h3>
-              <p>{isSearching ? '试试其他关键词吧' : '点击右下角按钮发布第一个两难问题吧！'}</p>
+            <div className="card empty-state empty-state-questions">
+              <div className="empty-state-icon">{isSearching ? '🔍' : '📝'}</div>
+              <div className="empty-state-title">{isSearching ? '没有找到相关问题' : '还没有问题'}</div>
+              <div className="empty-state-desc">
+                {isSearching ? '试试其他关键词吧~' : <>还没有人发布问题，点击右下角 <span className="highlight">+</span> 发布第一个两难问题吧！</>}
+              </div>
             </div>
           ) : (
             questions.map(q => (

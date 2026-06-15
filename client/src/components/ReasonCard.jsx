@@ -489,8 +489,11 @@ export default function ReasonCard({ reason, side, onUpdate }) {
       {showReplies && !loadingReplies && (
         <div className="reply-list">
           {replies.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 10, fontSize: 13, color: '#9ca3af' }}>
-              暂无回复，来说两句吧~
+            <div className="empty-state empty-state-replies">
+              <div className="empty-state-icon">💬</div>
+              <div className="empty-state-desc" style={{ fontSize: 13 }}>
+                还没有回复，<span className="highlight">来说两句吧~</span>
+              </div>
             </div>
           ) : (
             replies.map(reply => (

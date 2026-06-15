@@ -25,8 +25,11 @@ export default function TopReasons({ topA, topB, optionA, optionB }) {
         </div>
       </div>
       {reasons.length === 0 ? (
-        <div className="card empty-state" style={{ padding: '16px', fontSize: 14 }}>
-          暂无上榜理由
+        <div className="empty-state empty-state-reasons" style={{ padding: '16px' }}>
+          <div className="empty-state-icon" style={{ fontSize: 36 }}>🏆</div>
+          <div className="empty-state-desc" style={{ fontSize: 13 }}>
+            {side === 'A' ? optionA : optionB} 暂无上榜理由
+          </div>
         </div>
       ) : (
         reasons.map((reason, index) => (

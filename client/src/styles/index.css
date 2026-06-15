@@ -678,6 +678,54 @@ body {
   color: #6b7280;
 }
 
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-desc {
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.6;
+}
+
+.empty-state-desc .highlight {
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.empty-state-questions {
+  padding: 60px 20px;
+}
+
+.empty-state-questions .empty-state-icon {
+  font-size: 72px;
+}
+
+.empty-state-reasons {
+  padding: 30px 16px;
+}
+
+.empty-state-reasons .empty-state-icon {
+  font-size: 48px;
+}
+
+.empty-state-replies {
+  padding: 20px 16px;
+}
+
+.empty-state-replies .empty-state-icon {
+  font-size: 36px;
+}
+
 .loading {
   text-align: center;
   padding: 40px;
