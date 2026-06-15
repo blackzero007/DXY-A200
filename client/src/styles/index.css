@@ -173,11 +173,126 @@ body {
 .question-card {
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .question-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.question-card-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  padding: 16px 20px;
+  min-width: 280px;
+  max-width: 380px;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.question-card-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: white;
+}
+
+.question-card:hover .question-card-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tooltip-description {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.tooltip-vote-compare {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tooltip-vote-side {
+  flex: 1;
+  min-width: 0;
+}
+
+.tooltip-vote-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltip-vote-a .tooltip-vote-label {
+  color: #be185d;
+}
+
+.tooltip-vote-b .tooltip-vote-label {
+  color: #1d4ed8;
+}
+
+.tooltip-vote-count {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.tooltip-vote-a .tooltip-vote-count {
+  color: #ec4899;
+}
+
+.tooltip-vote-b .tooltip-vote-count {
+  color: #3b82f6;
+}
+
+.tooltip-vote-bar {
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tooltip-vote-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.tooltip-vote-bar-fill.side-a {
+  background: linear-gradient(90deg, #ec4899, #f472b6);
+}
+
+.tooltip-vote-bar-fill.side-b {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.tooltip-vote-divider {
+  font-size: 13px;
+  font-weight: 700;
+  color: #9ca3af;
+  flex-shrink: 0;
 }
 
 .question-category-tag {
@@ -1291,10 +1406,6 @@ body {
   top: 16px;
   right: 16px;
   z-index: 10;
-}
-
-.question-card {
-  position: relative;
 }
 
 .sort-tabs {

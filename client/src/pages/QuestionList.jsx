@@ -50,6 +50,12 @@ function QuestionCard({ question, onClick, keyword, showFavorite, isFavorited, o
     }
   }
 
+  const descriptionSnippet = question.description
+    ? question.description.length > 80
+      ? question.description.slice(0, 80) + '...'
+      : question.description
+    : null
+
   return (
     <div className="card question-card" onClick={onClick}>
       {showFavorite && (
@@ -85,6 +91,28 @@ function QuestionCard({ question, onClick, keyword, showFavorite, isFavorited, o
         <div className="vote-stats">
           <span>{totalVotes} 人投票</span>
           <span>{formatTime(question.created_at)}</span>
+        </div>
+      </div>
+      <div className="question-card-tooltip">
+        {descriptionSnippet && (
+          <div className="tooltip-description">{descriptionSnippet}</div>
+        )}
+        <div className="tooltip-vote-compare">
+          <div className="tooltip-vote-side tooltip-vote-a">
+            <span className="tooltip-vote-label">{question.option_a}</span>
+            <span className="tooltip-vote-count">{question.votes_a} 票</span>
+            <div className="tooltip-vote-bar">
+              <div className="tooltip-vote-bar-fill side-a" style={{ width: `${totalVotes > 0 ? percentA : 50}%` }}></div>
+            </div>
+          </div>
+          <div className="tooltip-vote-divider">VS</div>
+          <div className="tooltip-vote-side tooltip-vote-b">
+            <span className="tooltip-vote-label">{question.option_b}</span>
+            <span className="tooltip-vote-count">{question.votes_b} 票</span>
+            <div className="tooltip-vote-bar">
+              <div className="tooltip-vote-bar-fill side-b" style={{ width: `${totalVotes > 0 ? percentB : 50}%` }}></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
