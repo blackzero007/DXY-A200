@@ -99,12 +99,13 @@ router.get('/:id/statistics', (req, res) => {
   }
 
   const reasons = db.reasons.filter(r => r.question_id === id);
+  const activeReasons = reasons.filter(r => !r.changed_vote);
   const votesA = question.votes_a;
   const votesB = question.votes_b;
   const totalVotes = votesA + votesB;
 
   const uniqueVoters = new Set();
-  reasons.forEach(r => {
+  activeReasons.forEach(r => {
     if (r.user_id) {
       uniqueVoters.add(r.user_id);
     } else {
@@ -129,7 +130,7 @@ router.get('/:id/statistics', (req, res) => {
     dailyMap[dateStr] = { date: dateStr, A: 0, B: 0 };
   }
 
-  reasons.forEach(r => {
+  activeReasons.forEach(r => {
     const date = new Date(r.created_at);
     const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
     if (dailyMap[dateStr]) {
